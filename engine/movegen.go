@@ -143,21 +143,20 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 
 		if quit {
 			// castling
-			if pos.CastlePerm&wKCastle != 0 {
+			if pos.CastlePerm&wKCastle != 0 && pos.CastlePerm&wQCastle != 0 {
 				if pos.Pieces[F1] == Empty && pos.Pieces[G1] == Empty {
 					if !pos.SqAttacked(E1, Black) && !pos.SqAttacked(F1, Black) {
 						list.AddQuietMove(pos, MOVE(E1, G1, Empty, Empty, MFLAGCA))
 					}
 				}
-			}
 
-			if pos.CastlePerm&wQCastle != 0 {
 				if pos.Pieces[D1] == Empty && pos.Pieces[C1] == Empty && pos.Pieces[B1] == Empty {
 					if !pos.SqAttacked(E1, Black) && !pos.SqAttacked(D1, Black) {
 						list.AddQuietMove(pos, MOVE(E1, C1, Empty, Empty, MFLAGCA))
 					}
 				}
 			}
+
 		}
 
 	} else {
@@ -177,15 +176,13 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 
 		if quit {
 			// castling
-			if pos.CastlePerm&bKCastle != 0 {
+			if pos.CastlePerm&bKCastle != 0 && pos.CastlePerm&bQCastle != 0 {
 				if pos.Pieces[F8] == Empty && pos.Pieces[G8] == Empty {
 					if !pos.SqAttacked(E8, White) && !pos.SqAttacked(F8, White) {
 						list.AddQuietMove(pos, MOVE(E8, G8, Empty, Empty, MFLAGCA))
 					}
 				}
-			}
 
-			if pos.CastlePerm&bQCastle != 0 {
 				if pos.Pieces[D8] == Empty && pos.Pieces[C8] == Empty && pos.Pieces[B8] == Empty {
 					if !pos.SqAttacked(E8, White) && !pos.SqAttacked(D8, White) {
 						list.AddQuietMove(pos, MOVE(E8, C8, Empty, Empty, MFLAGCA))
@@ -221,7 +218,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 
 }
 
-func (list *MoveList) PrintMoveList() {
+func (list *MoveList) String() string {
 	moveListStr := "MoveList:\n"
 
 	for i := 0; i < list.Count; i++ {
@@ -231,4 +228,6 @@ func (list *MoveList) PrintMoveList() {
 		moveListStr += fmt.Sprintf("Move:%d > %s (score:%d)\n", i+1, PrMove(move), score)
 	}
 	moveListStr += fmt.Sprintf("MoveList Total %d Moves:\n\n", list.Count)
+
+	return moveListStr
 }
