@@ -83,6 +83,27 @@ func MIRROR(sq int) int {
 	return Mirror64[sq]
 }
 
+func calculatePieceMobility(piece uint8, sq int, pos *BoardStruct) int {
+	var list MoveList
+
+	if IsKn(piece) && PieceCol[piece] == pos.SideToMove {
+		GenKnightMoves(sq, pos, &list, false)
+		return list.Count / 2
+	}
+
+	if IsBQ(piece) && PieceCol[piece] == pos.SideToMove {
+		GenBishopMoves(sq, pos, &list, false)
+		return list.Count / 2
+	}
+
+	if IsRQ(piece) && PieceCol[piece] == pos.SideToMove {
+		GenRookMoves(sq, pos, &list, false)
+		return list.Count / 3
+	}
+
+	return 0
+}
+
 func MaterialDraw(pos *BoardStruct) bool {
 	if pos.PieceNum[wRook] == 0 && pos.PieceNum[bRook] == 0 &&
 		pos.PieceNum[wQueen] == 0 && pos.PieceNum[bQueen] == 0 {
@@ -146,12 +167,10 @@ func EvalPosition(pos *BoardStruct) int {
 		score += PawnTable[sq]
 
 		if (IsolatedMask[sq] & pos.Pawns[White]) == 0 {
-			//printf("wP Iso:%s\n",PrSq(sq));
 			score += PawnIsolated
 		}
 
 		if (WhitePassedMask[sq] & pos.Pawns[Black]) == 0 {
-			//printf("wP Passed:%s\n",PrSq(sq));
 			score += PawnPassed[RankOf(sq)]
 		}
 
@@ -164,12 +183,10 @@ func EvalPosition(pos *BoardStruct) int {
 		score -= PawnTable[MIRROR(sq)]
 
 		if (IsolatedMask[sq] & pos.Pawns[Black]) == 0 {
-			//printf("bP Iso:%s\n",PrSq(sq));
 			score -= PawnIsolated
 		}
 
 		if (BlackPassedMask[sq] & pos.Pawns[White]) == 0 {
-			//printf("bP Passed:%s\n",PrSq(sq));
 			score -= PawnPassed[7-RankOf(sq)]
 		}
 	}
@@ -178,30 +195,35 @@ func EvalPosition(pos *BoardStruct) int {
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score += KnightTable[sq]
+		score += calculatePieceMobility(piece, sq, pos)
 	}
 
 	piece = bKnight
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score -= KnightTable[MIRROR(sq)]
+		score -= calculatePieceMobility(piece, sq, pos)
 	}
 
 	piece = wBishop
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score += BishopTable[sq]
+		score += calculatePieceMobility(piece, sq, pos)
 	}
 
 	piece = bBishop
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score -= BishopTable[MIRROR(sq)]
+		score -= calculatePieceMobility(piece, sq, pos)
 	}
 
 	piece = wRook
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score += RookTable[sq]
+		score += calculatePieceMobility(piece, sq, pos)
 
 		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
 			score += RookOpenFile
@@ -214,6 +236,7 @@ func EvalPosition(pos *BoardStruct) int {
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 		score -= RookTable[MIRROR(sq)]
+		score -= calculatePieceMobility(piece, sq, pos)
 
 		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
 			score -= RookOpenFile

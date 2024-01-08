@@ -86,46 +86,15 @@ func LoadPolyglotFile(path string) (map[uint64][]PolyEntry, error) {
 	return entries, nil
 }
 
-func HasPawnForCapture(board *BoardStruct) bool {
-	sqWithPawn := 0
-	targetPce := wPawn
-
-	if board.SideToMove == Black {
-		targetPce = bPawn
-	}
-
-	if board.EnPas != NoSq {
-		if board.SideToMove == White {
-			sqWithPawn = board.EnPas - 10
-		} else {
-			sqWithPawn = board.EnPas + 10
-		}
-
-		if board.Pieces[sqWithPawn+1] == targetPce {
-			return true
-		} else if board.Pieces[sqWithPawn-1] == targetPce {
-			return true
-		}
-	}
-	return false
-}
-
 func PolyKeyFromBoard(board *BoardStruct) uint64 {
-	rank := 0
-	file := 0
-
 	var finalKey uint64 = 0
-	piece := Empty
-	polyPiece := 0
 	offset := 0
 
 	for sq := 0; sq < 64; sq++ {
-		piece = board.Pieces[sq]
+		piece := board.Pieces[sq]
 		if piece != NoSq && piece != Empty {
-			polyPiece = ConvertToPolyPiece[piece]
-			rank = RankOf(sq)
-			file = FileOf(sq)
-			finalKey ^= Random64Poly[(64*polyPiece)+(8*rank)+file]
+			polyPiece := ConvertToPolyPiece[piece]
+			finalKey ^= Random64Poly[(64*polyPiece)+sq]
 		}
 	}
 
@@ -147,9 +116,8 @@ func PolyKeyFromBoard(board *BoardStruct) uint64 {
 
 	// enpassant
 	offset = 772
-	if HasPawnForCapture(board) {
-		file = FileOf(board.EnPas)
-		finalKey ^= Random64Poly[offset+file]
+	if board.EnPas != NoSq {
+		finalKey ^= Random64Poly[offset+FileOf(board.EnPas)]
 	}
 
 	if board.SideToMove == White {
