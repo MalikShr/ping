@@ -80,7 +80,6 @@ func LoadPolyglotFile(path string) (map[uint64][]PolyEntry, error) {
 		bytesBuffer.Write(entryBytes[12:16])
 		binary.Read(bytesBuffer, binary.BigEndian, &learn)
 		entries[entry.Hash] = append(entries[entry.Hash], entry)
-
 	}
 
 	return entries, nil

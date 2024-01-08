@@ -246,7 +246,10 @@ func (pos *BoardStruct) ParseFen(fen string) {
 	}
 
 	if ep != "-" {
-		pos.EnPas = ParseMove(ep, pos)
+		file := ep[0] - 'a'
+		rank := int(ep[1]-'0') - 1
+
+		pos.EnPas = FR2SQ(int(file), rank)
 	}
 
 	for _, char := range castling {
@@ -286,10 +289,10 @@ func (pos *BoardStruct) String() string {
 	boardStr += "\n"
 	boardStr += fmt.Sprintf("side:%c\n", SideChar[pos.SideToMove])
 
-	ep := "None"
+	ep := "enPas: none\n"
 
 	if pos.EnPas != NoSq {
-		ep = fmt.Sprintf("enPas:%d\n", pos.EnPas)
+		ep = fmt.Sprintf("enPas: %s\n", PrSq(pos.EnPas))
 	}
 
 	boardStr += ep
