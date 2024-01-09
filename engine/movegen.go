@@ -192,6 +192,13 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 		}
 	}
 
+	mg := MoveGen{
+		pos:  pos,
+		list: list,
+		side: pos.SideToMove,
+		quit: quit,
+	}
+
 	for sq := 0; sq < 64; sq++ {
 		piece := pos.Pieces[sq]
 
@@ -200,19 +207,19 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 		}
 
 		if IsKn(piece) && PieceCol[piece] == pos.SideToMove {
-			GenKnightMoves(sq, pos, list, quit)
+			mg.GenKnightMoves(sq)
 		}
 
 		if IsBQ(piece) && PieceCol[piece] == pos.SideToMove {
-			GenBishopMoves(sq, pos, list, quit)
+			mg.GenBishopMoves(sq)
 		}
 
 		if IsRQ(piece) && PieceCol[piece] == pos.SideToMove {
-			GenRookMoves(sq, pos, list, quit)
+			mg.GenRookMoves(sq)
 		}
 
 		if IsKi(piece) && PieceCol[piece] == pos.SideToMove {
-			GenKingMoves(sq, pos, list, quit)
+			mg.GenKingMoves(sq)
 		}
 	}
 

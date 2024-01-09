@@ -1,6 +1,8 @@
 package engine
 
-import "math"
+import (
+	"math"
+)
 
 type Move struct {
 	Move  int
@@ -133,6 +135,15 @@ func ValidPawnDelta2(sq int, direction int) bool {
 
 func (pos *BoardStruct) SqAttacked(sq int, side uint8) bool {
 
+	var list MoveList
+
+	mg := MoveGen{
+		pos:  pos,
+		list: &list,
+		side: side,
+		quit: false,
+	}
+
 	// pawns
 	if side == White {
 		if sq-9 > 0 && ((pos.Pieces[sq-9] == wPawn && ValidPawnDelta2(sq, -1)) || (pos.Pieces[sq-7] == wPawn && ValidPawnDelta1(sq, -1))) {
@@ -144,8 +155,6 @@ func (pos *BoardStruct) SqAttacked(sq int, side uint8) bool {
 		}
 	}
 
-	var list MoveList
-
 	for sq := 0; sq < 64; sq++ {
 		piece := pos.Pieces[sq]
 
@@ -154,19 +163,19 @@ func (pos *BoardStruct) SqAttacked(sq int, side uint8) bool {
 		}
 
 		if IsKn(piece) && PieceCol[piece] == side {
-			GenKnightMoves(sq, pos, &list, false)
+			mg.GenKnightMoves(sq)
 		}
 
 		if IsBQ(piece) && PieceCol[piece] == side {
-			GenBishopMoves(sq, pos, &list, false)
+			mg.GenBishopMoves(sq)
 		}
 
 		if IsRQ(piece) && PieceCol[piece] == side {
-			GenRookMoves(sq, pos, &list, false)
+			mg.GenRookMoves(sq)
 		}
 
 		if IsKi(piece) && PieceCol[piece] == side {
-			GenKingMoves(sq, pos, &list, false)
+			mg.GenKingMoves(sq)
 		}
 	}
 

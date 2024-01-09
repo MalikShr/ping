@@ -1,6 +1,13 @@
 package engine
 
-func GenBishopMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
+type MoveGen struct {
+	pos  *BoardStruct
+	list *MoveList
+	side uint8
+	quit bool
+}
+
+func (mg MoveGen) GenBishopMoves(sq int) {
 	rank := RankOf(sq)
 	file := FileOf(sq)
 
@@ -14,15 +21,15 @@ func GenBishopMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -36,15 +43,15 @@ func GenBishopMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -58,15 +65,15 @@ func GenBishopMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -80,20 +87,20 @@ func GenBishopMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 }
 
-func GenRookMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
+func (mg MoveGen) GenRookMoves(sq int) {
 	file := FileOf(sq)
 	rank := RankOf(sq)
 
@@ -108,15 +115,15 @@ func GenRookMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -130,15 +137,15 @@ func GenRookMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -153,15 +160,15 @@ func GenRookMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 
@@ -175,93 +182,93 @@ func GenRookMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
 			break
 		}
 
-		if pos.Pieces[targetSq] != Empty {
-			if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-				list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 			}
 			break
 		}
 
-		if quit {
-			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 		}
 	}
 }
 
-func GenKnightMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
+func (mg MoveGen) GenKnightMoves(sq int) {
 	file := FileOf(sq)
 	rank := RankOf(sq)
 
 	// up-left
-	AddMove(file-1, rank-2, sq, pos, list, quit)
+	mg.AddMove(sq, file-1, rank-2)
 
 	//up-right
-	AddMove(file+1, rank-2, sq, pos, list, quit)
+	mg.AddMove(sq, file+1, rank-2)
 
 	// down-left
-	AddMove(file-1, rank+2, sq, pos, list, quit)
+	mg.AddMove(sq, file-1, rank+2)
 
 	// down-right
-	AddMove(file+1, rank+2, sq, pos, list, quit)
+	mg.AddMove(sq, file+1, rank+2)
 
 	//left-up
-	AddMove(file-2, rank-1, sq, pos, list, quit)
+	mg.AddMove(sq, file-2, rank-1)
 
 	//left-down
-	AddMove(file-2, rank+1, sq, pos, list, quit)
+	mg.AddMove(sq, file-2, rank+1)
 
 	//right-up
-	AddMove(file+2, rank-1, sq, pos, list, quit)
+	mg.AddMove(sq, file+2, rank-1)
 
 	//right-down
-	AddMove(file+2, rank+1, sq, pos, list, quit)
+	mg.AddMove(sq, file+2, rank+1)
 }
 
-func GenKingMoves(sq int, pos *BoardStruct, list *MoveList, quit bool) {
+func (mg MoveGen) GenKingMoves(sq int) {
 	file := FileOf(sq)
 	rank := RankOf(sq)
 
 	// up
-	AddMove(file, rank-1, sq, pos, list, quit)
+	mg.AddMove(sq, file, rank-1)
 
 	// left
-	AddMove(file-1, rank, sq, pos, list, quit)
+	mg.AddMove(sq, file-1, rank)
 
 	//down
-	AddMove(file, rank+1, sq, pos, list, quit)
+	mg.AddMove(sq, file, rank+1)
 
 	//right
-	AddMove(file+1, rank, sq, pos, list, quit)
+	mg.AddMove(sq, file+1, rank)
 
 	// up-left
-	AddMove(file-1, rank-1, sq, pos, list, quit)
+	mg.AddMove(sq, file-1, rank-1)
 
 	// up-right
-	AddMove(file+1, rank-1, sq, pos, list, quit)
+	mg.AddMove(sq, file+1, rank-1)
 
 	// down-left
-	AddMove(file-1, rank+1, sq, pos, list, quit)
+	mg.AddMove(sq, file-1, rank+1)
 
 	//down-right
-	AddMove(file+1, rank+1, sq, pos, list, quit)
+	mg.AddMove(sq, file+1, rank+1)
 }
 
-func AddMove(f int, r int, sq int, pos *BoardStruct, list *MoveList, quit bool) {
+func (mg MoveGen) AddMove(sq int, f int, r int) {
 	targetSq := FR2SQ(f, r)
 
 	if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
 		return
 	}
 
-	if pos.Pieces[targetSq] != Empty {
-		if PieceCol[pos.Pieces[targetSq]] == pos.SideToMove^1 {
-			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+	if mg.pos.Pieces[targetSq] != Empty {
+		if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+			mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
 		}
 		return
 	}
 
-	if quit {
-		list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+	if mg.quit {
+		mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
 	}
 }
 

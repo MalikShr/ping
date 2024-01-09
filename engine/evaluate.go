@@ -86,18 +86,25 @@ func MIRROR(sq int) int {
 func calculatePieceMobility(piece uint8, sq int, pos *BoardStruct) int {
 	var list MoveList
 
+	mg := MoveGen{
+		pos:  pos,
+		list: &list,
+		side: pos.SideToMove,
+		quit: false,
+	}
+
 	if IsKn(piece) && PieceCol[piece] == pos.SideToMove {
-		GenKnightMoves(sq, pos, &list, false)
+		mg.GenKnightMoves(sq)
 		return list.Count / 2
 	}
 
 	if IsBQ(piece) && PieceCol[piece] == pos.SideToMove {
-		GenBishopMoves(sq, pos, &list, false)
+		mg.GenBishopMoves(sq)
 		return list.Count / 2
 	}
 
 	if IsRQ(piece) && PieceCol[piece] == pos.SideToMove {
-		GenRookMoves(sq, pos, &list, false)
+		mg.GenRookMoves(sq)
 		return list.Count / 3
 	}
 

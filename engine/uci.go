@@ -130,17 +130,8 @@ func (inter *UCIInterface) handleUci() {
 func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) {
 	// If Opening book is enabled a random move will be logged instead of searching
 
-	if inter.OpeningBook[7363297126586722772] != nil {
-		fmt.Println("MOVE EXISTS")
-	}
-
-	if inter.OpeningBook[5060803636482931868] != nil {
-		fmt.Println("BUT THIS MOVE EXISTS!")
-	}
-
 	if inter.OptionUseBook {
 		if inter.OpeningBook[PolyKeyFromBoard(pos)] != nil {
-			fmt.Println("FOUND MOVE")
 			entries := inter.OpeningBook[PolyKeyFromBoard(pos)]
 
 			bestMove := entries[rand.Intn(len(entries))].Move
