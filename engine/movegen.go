@@ -1,125 +1,10 @@
 package engine
 
-import "fmt"
-
-var VictimScore = [13]int{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
-var MvvLvaScores [13][13]int
-
-func InitMvvLva() {
-	for Attacker := wPawn; Attacker <= bKing; Attacker++ {
-		for Victim := wPawn; Victim <= bKing; Victim++ {
-			MvvLvaScores[Victim][Attacker] = VictimScore[Victim] + 6 - (VictimScore[Attacker] / 100)
-		}
-	}
-}
-
-func MoveExists(pos *BoardStruct, move int) bool {
-	var list MoveList
-	GenerateAllMoves(pos, &list, true)
-
-	for moveNum := 0; moveNum < list.Count; moveNum++ {
-		if !pos.MakeMove(list.Moves[moveNum].Move) {
-			continue
-		}
-		pos.TakeMove()
-		if list.Moves[moveNum].Move == move {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
-
-	if pos.SearchKillers[0][pos.Ply] == move {
-		list.Moves[list.Count].Score = 900_000
-	} else if pos.SearchKillers[1][pos.Ply] == move {
-		list.Moves[list.Count].Score = 800_000
-	} else {
-
-		list.Moves[list.Count].Score = pos.SearchHistory[pos.Pieces[FROMSQ(move)]][TOSQ(move)]
-	}
-
-	list.Count++
-}
-
-func (list *MoveList) AddCaptureMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = MvvLvaScores[CAPTURED(move)][pos.Pieces[FROMSQ(move)]] + 1_000_000
-	list.Count++
-}
-
-func (list *MoveList) AddEnPassantMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = 105 + 1_000_000
-	list.Count++
-}
-
-func (list *MoveList) AddPawnCapMove(pos *BoardStruct, from int, to int, cap uint8, side uint8) {
-	possibleProms := [4]uint8{wQueen, wRook, wBishop, wKnight}
-	beforePromRank := R7
-
-	if side == Black {
-		possibleProms = [4]uint8{bQueen, bRook, bBishop, bKnight}
-		beforePromRank = R2
-	}
-
-	if RankOf(from) == beforePromRank {
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[0], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[1], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[2], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[3], 0))
-	} else {
-		list.AddCaptureMove(pos, MOVE(from, to, cap, Empty, 0))
-	}
-}
-
-func (list *MoveList) AddPawnMove(pos *BoardStruct, from int, to int, side uint8) {
-	possibleProms := [4]uint8{wQueen, wRook, wBishop, wKnight}
-	beforePromRank := R7
-
-	if side == Black {
-		possibleProms = [4]uint8{bQueen, bRook, bBishop, bKnight}
-		beforePromRank = R2
-	}
-
-	if RankOf(from) == beforePromRank {
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[0], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[1], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[2], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[3], 0))
-	} else {
-		list.AddQuietMove(pos, MOVE(from, to, Empty, Empty, 0))
-	}
-}
-
-func (list *MoveList) GenerateAllPawnCaptureMoves(sq int, pos *BoardStruct, side uint8) {
-	direction := 1
-
-	if side == Black {
-		direction = -1
-	}
-
-	if !SQOFFBOARD(sq+(7*direction)) && PieceCol[pos.Pieces[sq+(7*direction)]] == pos.SideToMove^1 && ValidPawnDelta1(sq, direction) {
-		list.AddPawnCapMove(pos, sq, sq+(7*direction), pos.Pieces[sq+(7*direction)], side)
-	}
-
-	if !SQOFFBOARD(sq+(9*direction)) && PieceCol[pos.Pieces[sq+(9*direction)]] == pos.SideToMove^1 && ValidPawnDelta2(sq, direction) {
-		list.AddPawnCapMove(pos, sq, sq+(9*direction), pos.Pieces[sq+(9*direction)], side)
-	}
-
-	if pos.EnPas != NoSq {
-		if sq+(7*direction) == pos.EnPas && ValidPawnDelta1(sq, direction) {
-			move := MOVE(sq, sq+(7*direction), Empty, Empty, MFLAGEP)
-			list.AddEnPassantMove(pos, move)
-		}
-		if sq+(9*direction) == pos.EnPas && ValidPawnDelta2(sq, direction) {
-			move := MOVE(sq, sq+(9*direction), Empty, Empty, MFLAGEP)
-			list.AddEnPassantMove(pos, move)
-		}
-	}
+type MoveGen struct {
+	pos  *BoardStruct
+	list *MoveList
+	side uint8
+	quit bool
 }
 
 func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
@@ -138,7 +23,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 				}
 			}
 
-			list.GenerateAllPawnCaptureMoves(sq, pos, White)
+			GenerateAllPawnCaptureMoves(sq, pos, list, White)
 		}
 
 		if quit {
@@ -171,7 +56,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 				}
 			}
 
-			list.GenerateAllPawnCaptureMoves(sq, pos, Black)
+			GenerateAllPawnCaptureMoves(sq, pos, list, Black)
 		}
 
 		if quit {
@@ -222,19 +107,300 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quit bool) {
 			mg.GenKingMoves(sq)
 		}
 	}
-
 }
 
-func (list *MoveList) String() string {
-	moveListStr := "MoveList:\n"
+func GenerateAllPawnCaptureMoves(sq int, pos *BoardStruct, list *MoveList, side uint8) {
+	direction := 1
 
-	for i := 0; i < list.Count; i++ {
-		move := list.Moves[i].Move
-		score := list.Moves[i].Score
-
-		moveListStr += fmt.Sprintf("Move:%d > %s (score:%d)\n", i+1, PrMove(move), score)
+	if side == Black {
+		direction = -1
 	}
-	moveListStr += fmt.Sprintf("MoveList Total %d Moves:\n\n", list.Count)
 
-	return moveListStr
+	if !SQOFFBOARD(sq+(7*direction)) && PieceCol[pos.Pieces[sq+(7*direction)]] == pos.SideToMove^1 && ValidPawnDelta1(sq, direction) {
+		list.AddPawnCapMove(pos, sq, sq+(7*direction), pos.Pieces[sq+(7*direction)], side)
+	}
+
+	if !SQOFFBOARD(sq+(9*direction)) && PieceCol[pos.Pieces[sq+(9*direction)]] == pos.SideToMove^1 && ValidPawnDelta2(sq, direction) {
+		list.AddPawnCapMove(pos, sq, sq+(9*direction), pos.Pieces[sq+(9*direction)], side)
+	}
+
+	if pos.EnPas != NoSq {
+		if sq+(7*direction) == pos.EnPas && ValidPawnDelta1(sq, direction) {
+			move := MOVE(sq, sq+(7*direction), Empty, Empty, MFLAGEP)
+			list.AddEnPassantMove(pos, move)
+		}
+		if sq+(9*direction) == pos.EnPas && ValidPawnDelta2(sq, direction) {
+			move := MOVE(sq, sq+(9*direction), Empty, Empty, MFLAGEP)
+			list.AddEnPassantMove(pos, move)
+		}
+	}
+}
+
+func (mg MoveGen) GenBishopMoves(sq int) {
+	rank := RankOf(sq)
+	file := FileOf(sq)
+
+	for i := 1; i < 8; i++ {
+		f := file - i
+		r := rank - i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	for i := 1; i < 8; i++ {
+		f := file + i
+		r := rank - i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	for i := 1; i < 8; i++ {
+		f := file - i
+		r := rank + i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	for i := 1; i < 8; i++ {
+		f := file + i
+		r := rank + i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+}
+
+func (mg MoveGen) GenRookMoves(sq int) {
+	file := FileOf(sq)
+	rank := RankOf(sq)
+
+	// Check for horizontal moves
+	for i := 1; i < 8; i++ {
+		f := file + i
+		r := rank
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	for i := 1; i < 8; i++ {
+		f := file - i
+		r := rank
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	// Check for vertical moves
+	for i := 1; i < 8; i++ {
+		f := file
+		r := rank + i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+
+	for i := 1; i < 8; i++ {
+		f := file
+		r := rank - i
+
+		targetSq := FR2SQ(f, r)
+
+		if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+			break
+		}
+
+		if mg.pos.Pieces[targetSq] != Empty {
+			if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+				mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+			}
+			break
+		}
+
+		if mg.quit {
+			mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+}
+
+func (mg MoveGen) GenKnightMoves(sq int) {
+	file := FileOf(sq)
+	rank := RankOf(sq)
+
+	// up-left
+	mg.AddMove(sq, file-1, rank-2)
+
+	//up-right
+	mg.AddMove(sq, file+1, rank-2)
+
+	// down-left
+	mg.AddMove(sq, file-1, rank+2)
+
+	// down-right
+	mg.AddMove(sq, file+1, rank+2)
+
+	//left-up
+	mg.AddMove(sq, file-2, rank-1)
+
+	//left-down
+	mg.AddMove(sq, file-2, rank+1)
+
+	//right-up
+	mg.AddMove(sq, file+2, rank-1)
+
+	//right-down
+	mg.AddMove(sq, file+2, rank+1)
+}
+
+func (mg MoveGen) GenKingMoves(sq int) {
+	file := FileOf(sq)
+	rank := RankOf(sq)
+
+	// up
+	mg.AddMove(sq, file, rank-1)
+
+	// left
+	mg.AddMove(sq, file-1, rank)
+
+	//down
+	mg.AddMove(sq, file, rank+1)
+
+	//right
+	mg.AddMove(sq, file+1, rank)
+
+	// up-left
+	mg.AddMove(sq, file-1, rank-1)
+
+	// up-right
+	mg.AddMove(sq, file+1, rank-1)
+
+	// down-left
+	mg.AddMove(sq, file-1, rank+1)
+
+	//down-right
+	mg.AddMove(sq, file+1, rank+1)
+}
+
+func (mg MoveGen) AddMove(sq int, f int, r int) {
+	targetSq := FR2SQ(f, r)
+
+	if SQOFFBOARD(targetSq) || LastBordIndex(f, r) {
+		return
+	}
+
+	if mg.pos.Pieces[targetSq] != Empty {
+		if PieceCol[mg.pos.Pieces[targetSq]] == mg.side^1 {
+			mg.list.AddCaptureMove(mg.pos, MOVE(sq, targetSq, mg.pos.Pieces[targetSq], Empty, 0))
+		}
+		return
+	}
+
+	if mg.quit {
+		mg.list.AddQuietMove(mg.pos, MOVE(sq, targetSq, Empty, Empty, 0))
+	}
+}
+
+func LastBordIndex(f int, r int) bool {
+	return r < 0 || r > 7 || f < 0 || f > 7
 }

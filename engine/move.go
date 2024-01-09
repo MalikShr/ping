@@ -9,20 +9,6 @@ type Move struct {
 	Score int
 }
 
-type MoveList struct {
-	Moves [maxPositionMoves]Move
-	Count int
-}
-
-type State struct {
-	Hash uint64
-
-	Move       int
-	CastlePerm int
-	EnPas      int
-	Rule50     int
-}
-
 var MFLAGEP int = 0x40000
 var MFLAGPS int = 0x80000
 var MFLAGCA int = 0x1000000
@@ -393,4 +379,21 @@ func (pos *BoardStruct) TakeMove() {
 
 		pos.AddPiece(from, pawn)
 	}
+}
+
+func MoveExists(pos *BoardStruct, move int) bool {
+	var list MoveList
+	GenerateAllMoves(pos, &list, true)
+
+	for moveNum := 0; moveNum < list.Count; moveNum++ {
+		if !pos.MakeMove(list.Moves[moveNum].Move) {
+			continue
+		}
+		pos.TakeMove()
+		if list.Moves[moveNum].Move == move {
+			return true
+		}
+	}
+
+	return false
 }

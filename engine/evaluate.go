@@ -79,6 +79,17 @@ var KingO = [64]int{
 	-70, -70, -70, -70, -70, -70, -70, -70,
 }
 
+var VictimScore = [13]int{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
+var MvvLvaScores [13][13]int
+
+func InitMvvLva() {
+	for Attacker := wPawn; Attacker <= bKing; Attacker++ {
+		for Victim := wPawn; Victim <= bKing; Victim++ {
+			MvvLvaScores[Victim][Attacker] = VictimScore[Victim] + 6 - (VictimScore[Attacker] / 100)
+		}
+	}
+}
+
 func MIRROR(sq int) int {
 	return Mirror64[sq]
 }

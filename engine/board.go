@@ -103,6 +103,15 @@ type BoardStruct struct {
 	SearchKillers [2][MaxDepth]int
 }
 
+type State struct {
+	Hash uint64
+
+	Move       int
+	CastlePerm int
+	EnPas      int
+	Rule50     int
+}
+
 var SetMask [64]uint64
 var ClearMask [64]uint64
 
