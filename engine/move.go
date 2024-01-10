@@ -91,12 +91,13 @@ func (pos *BoardStruct) ClearPiece(sq int) {
 
 	pos.HASHPIECE(piece, sq)
 
+	pos.Sides[col].CLEARBIT(sq)
 	pos.Pieces[sq] = Empty
 	pos.Material[col] -= PieceVal[piece]
 
 	if !PieceBig[piece] {
-		CLEARBIT(&pos.Pawns[col], sq)
-		CLEARBIT(&pos.Pawns[Both], sq)
+		pos.Pawns[col].CLEARBIT(sq)
+		pos.Pawns[Both].CLEARBIT(sq)
 	}
 
 	for i := 0; i < pos.PieceNum[piece]; i++ {
@@ -119,54 +120,51 @@ func ValidPawnDelta2(sq int, direction int) bool {
 	return math.Abs(float64(FileOf(sq)-FileOf(sq+(9*direction)))) == 1
 }
 
-func (pos *BoardStruct) SqAttacked(sq int, side uint8) bool {
+func (pos *BoardStruct) SqAttacked(targetSq int, side uint8) bool {
 
 	var list MoveList
 
-	mg := MoveGen{
-		pos:  pos,
-		list: &list,
-		side: side,
-		quit: false,
-	}
-
 	// pawns
 	if side == White {
-		if sq-9 > 0 && ((pos.Pieces[sq-9] == wPawn && ValidPawnDelta2(sq, -1)) || (pos.Pieces[sq-7] == wPawn && ValidPawnDelta1(sq, -1))) {
+		if targetSq-9 > 0 && ((pos.Pieces[targetSq-9] == wPawn && ValidPawnDelta2(targetSq, -1)) || (pos.Pieces[targetSq-7] == wPawn && ValidPawnDelta1(targetSq, -1))) {
 			return true
 		}
 	} else {
-		if sq+9 < 64 && ((pos.Pieces[sq+9] == bPawn && ValidPawnDelta2(sq, 1)) || (pos.Pieces[sq+7] == bPawn && ValidPawnDelta1(sq, 1))) {
+		if targetSq+9 < 64 && ((pos.Pieces[targetSq+9] == bPawn && ValidPawnDelta2(targetSq, 1)) || (pos.Pieces[targetSq+7] == bPawn && ValidPawnDelta1(targetSq, 1))) {
 			return true
 		}
 	}
 
-	for sq := 0; sq < 64; sq++ {
-		piece := pos.Pieces[sq]
+	var pieceIndex uint8 = 0
 
-		if piece == Empty || piece == wPawn || piece == bPawn {
-			continue
-		}
+	for pieceIndex < 10 {
+		piece := NonPawnPieces[pieceIndex]
 
-		if IsKn(piece) && PieceCol[piece] == side {
-			mg.GenKnightMoves(sq)
-		}
+		for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
+			sq := pos.PieceList[piece][pieceNum]
+			piece := pos.Pieces[sq]
 
-		if IsBQ(piece) && PieceCol[piece] == side {
-			mg.GenBishopMoves(sq)
-		}
+			if IsKn(piece) && PieceCol[piece] == side {
+				GenKnightAttacks(sq, pos.Sides[side], pos.Sides[side^1], pos, &list, false)
+			}
 
-		if IsRQ(piece) && PieceCol[piece] == side {
-			mg.GenRookMoves(sq)
-		}
+			if IsBQ(piece) && PieceCol[piece] == side {
+				GenBishopAttacks(sq, pos.Sides[side], pos.Sides[side^1], pos, &list, false)
+			}
 
-		if IsKi(piece) && PieceCol[piece] == side {
-			mg.GenKingMoves(sq)
+			if IsRQ(piece) && PieceCol[piece] == side {
+				GenRookAttacks(sq, pos.Sides[side], pos.Sides[side^1], pos, &list, false)
+			}
+
+			if IsKi(piece) && PieceCol[piece] == side {
+				GenKingAttacks(sq, pos.Sides[side], pos.Sides[side^1], pos, &list, false)
+			}
 		}
+		pieceIndex++
 	}
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
-		if TOSQ(list.Moves[moveNum].Move) == sq {
+		if TOSQ(list.Moves[moveNum].Move) == targetSq {
 			return true
 		}
 	}
@@ -180,10 +178,11 @@ func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
 	pos.HASHPIECE(piece, sq)
 
 	pos.Pieces[sq] = piece
+	pos.Sides[col].SETBIT(sq)
 
 	if !PieceBig[piece] {
-		SETBIT(&pos.Pawns[col], sq)
-		SETBIT(&pos.Pawns[Both], sq)
+		pos.Pawns[col].SETBIT(sq)
+		pos.Pawns[Both].SETBIT(sq)
 	}
 
 	pos.Material[col] += PieceVal[piece]
@@ -196,17 +195,19 @@ func (pos *BoardStruct) MovePiece(from int, to int) {
 	piece := pos.Pieces[from]
 	col := PieceCol[piece]
 
+	pos.Sides[col].CLEARBIT(from)
 	pos.HASHPIECE(piece, from)
 	pos.Pieces[from] = Empty
 
+	pos.Sides[col].SETBIT(to)
 	pos.HASHPIECE(piece, to)
 	pos.Pieces[to] = piece
 
 	if !PieceBig[piece] {
-		CLEARBIT(&pos.Pawns[col], from)
-		CLEARBIT(&pos.Pawns[Both], from)
-		SETBIT(&pos.Pawns[col], to)
-		SETBIT(&pos.Pawns[Both], to)
+		pos.Pawns[col].CLEARBIT(from)
+		pos.Pawns[Both].CLEARBIT(from)
+		pos.Pawns[col].SETBIT(to)
+		pos.Pawns[Both].SETBIT(to)
 	}
 
 	for index := 0; index < pos.PieceNum[piece]; index++ {

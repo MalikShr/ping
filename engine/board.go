@@ -79,7 +79,8 @@ type BoardStruct struct {
 	Hash uint64
 
 	Pieces [64]uint8
-	Pawns  [3]uint64
+	Pawns  [3]Bitboard
+	Sides  [2]Bitboard
 
 	KingSq [2]int
 
@@ -112,19 +113,19 @@ type State struct {
 	Rule50     int
 }
 
-var SetMask [64]uint64
-var ClearMask [64]uint64
+var SetMask [64]Bitboard
+var ClearMask [64]Bitboard
 
 var PieceKeys [13][64]uint64
 var SideKey uint64
 var CastleKeys [16]uint64
 
-var FileBBMask [8]uint64
-var RankBBMask [8]uint64
+var FileBBMask [8]Bitboard
+var RankBBMask [8]Bitboard
 
-var BlackPassedMask [64]uint64
-var WhitePassedMask [64]uint64
-var IsolatedMask [64]uint64
+var BlackPassedMask [64]Bitboard
+var WhitePassedMask [64]Bitboard
+var IsolatedMask [64]Bitboard
 
 // A constant mapping piece characters to Piece objects.
 var CharToPiece = map[byte]uint8{
@@ -146,15 +147,8 @@ func FR2SQ(f int, r int) int {
 	return f + r*8
 }
 
-func CLEARBIT(bb *uint64, sq int) {
-	*bb &= ClearMask[sq]
-}
-
-func SETBIT(bb *uint64, sq int) {
-	*bb |= SetMask[sq]
-}
-
 func (pos *BoardStruct) ResetBoard() {
+
 	for i := 0; i < 64; i++ {
 		pos.Pieces[i] = Empty
 	}
@@ -162,6 +156,7 @@ func (pos *BoardStruct) ResetBoard() {
 	for i := 0; i < 2; i++ {
 		pos.Material[i] = 0
 		pos.Pawns[i] = 0
+		pos.Sides[i] = 0
 	}
 
 	for i := 0; i < 3; i++ {
@@ -209,13 +204,15 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 				pos.KingSq[Black] = sq
 			}
 
+			pos.Sides[color].SETBIT(sq)
+
 			if piece == wPawn {
-				SETBIT(&pos.Pawns[White], sq)
-				SETBIT(&pos.Pawns[Both], sq)
+				pos.Pawns[White].SETBIT(sq)
+				pos.Pawns[Both].SETBIT(sq)
 			}
 			if piece == bPawn {
-				SETBIT(&pos.Pawns[Black], sq)
-				SETBIT(&pos.Pawns[Both], sq)
+				pos.Pawns[Black].SETBIT(sq)
+				pos.Pawns[Both].SETBIT(sq)
 			}
 		}
 	}

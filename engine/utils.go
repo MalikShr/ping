@@ -19,6 +19,7 @@ var (
 	PieceRookQueen   = [13]bool{false, false, false, false, true, true, false, false, false, false, true, true, false}
 	PieceBishopQueen = [13]bool{false, false, false, true, false, true, false, false, false, true, false, true, false}
 	PieceSlides      = [13]bool{false, false, false, true, true, true, false, false, false, true, true, true, false}
+	NonPawnPieces    = [10]uint8{wKnight, wBishop, wRook, wQueen, wKing, bKnight, bBishop, bRook, bQueen, bKing}
 
 	Mirror64 = [64]int{
 		56, 57, 58, 59, 60, 61, 62, 63,
@@ -139,7 +140,7 @@ func CheckBoard(pos *BoardStruct) bool {
 
 	var pcount int
 
-	var tPawns [3]uint64
+	var tPawns [3]Bitboard
 	tPawns[White] = pos.Pawns[White]
 	tPawns[Black] = pos.Pawns[Black]
 	tPawns[Both] = pos.Pawns[Both]
@@ -183,17 +184,17 @@ func CheckBoard(pos *BoardStruct) bool {
 	}
 
 	// Check bitboards count
-	pcount = CountBits(tPawns[White])
+	pcount = tPawns[White].CountBits()
 	if pcount != pos.PieceNum[wPawn] {
 		fmt.Println("Error: White pawn count mismatch")
 		return false
 	}
-	pcount = CountBits(tPawns[Black])
+	pcount = tPawns[Black].CountBits()
 	if pcount != pos.PieceNum[bPawn] {
 		fmt.Println("Error: Black pawn count mismatch")
 		return false
 	}
-	pcount = CountBits(tPawns[Both])
+	pcount = tPawns[Both].CountBits()
 	if pcount != pos.PieceNum[bPawn]+pos.PieceNum[wPawn] {
 		fmt.Println("Error: Combined pawn count mismatch")
 		return false
@@ -201,7 +202,7 @@ func CheckBoard(pos *BoardStruct) bool {
 
 	// Check bitboards squares
 	for tPawns[White] != 0 {
-		sq := PopBit(&tPawns[White])
+		sq := tPawns[White].PopBit()
 		if pos.Pieces[sq] != wPawn {
 			fmt.Println("Error: White pawn bitboard mismatch at square", sq)
 			return false
@@ -209,7 +210,7 @@ func CheckBoard(pos *BoardStruct) bool {
 	}
 
 	for tPawns[Black] != 0 {
-		sq := PopBit(&tPawns[Black])
+		sq := tPawns[Black].PopBit()
 		if pos.Pieces[sq] != bPawn {
 			fmt.Println("Error: Black pawn bitboard mismatch at square", sq)
 			return false
@@ -217,7 +218,7 @@ func CheckBoard(pos *BoardStruct) bool {
 	}
 
 	for tPawns[Both] != 0 {
-		sq := PopBit(&tPawns[Both])
+		sq := tPawns[Both].PopBit()
 		if pos.Pieces[sq] != bPawn && pos.Pieces[sq] != wPawn {
 			fmt.Println("Error: Combined pawn bitboard mismatch at square", sq)
 			return false

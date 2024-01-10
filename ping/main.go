@@ -9,10 +9,12 @@ func Init() {
 	engine.InitHashKeys()
 	engine.InitEvalMasks()
 	engine.InitMvvLva()
+	engine.InitAttacks()
 }
 
 func main() {
 	Init()
 
 	engine.Uci()
+
 }
