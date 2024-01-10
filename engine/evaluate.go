@@ -13,114 +13,73 @@ const (
 
 var PawnPassed = [8]int{0, 5, 10, 20, 35, 60, 100, 200}
 
-var PawnTable = [64]int{
+var PstPawn = [64]int{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	10, 10, 0, -10, -10, 0, 10, 10,
-	5, 0, 0, 5, 5, 0, 0, 5,
-	0, 0, 10, 20, 20, 10, 0, 0,
-	5, 5, 5, 10, 10, 5, 5, 5,
-	10, 10, 10, 20, 20, 10, 10, 10,
-	20, 20, 20, 30, 30, 20, 20, 20,
+	5, 10, 10, -20, -20, 10, 10, 5,
+	5, -5, -10, 0, 0, -10, -5, 5,
+	0, 0, 0, 20, 20, 0, 0, 0,
+	5, 5, 10, 25, 25, 10, 5, 5,
+	10, 10, 20, 30, 30, 20, 10, 10,
+	50, 50, 50, 50, 50, 50, 50, 50,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var KnightTable = [64]int{
-	0, -10, 0, 0, 0, 0, -10, 0,
+var PstKnight = [64]int{
+	-50, -40, -30, -30, -30, -30, -40, -50,
+	-40, -20, 0, 5, 5, 0, -20, -40,
+	-30, 5, 10, 15, 15, 10, 5, -30,
+	-30, 0, 15, 20, 20, 15, 0, -30,
+	-30, 5, 15, 20, 20, 15, 5, -30,
+	-30, 0, 10, 15, 15, 10, 0, -30,
+	-40, -20, 0, 0, 0, 0, -20, -40,
+	-50, -40, -30, -30, -30, -30, -40, -50,
+}
+
+var PstBishop = [64]int{
+	-20, -10, -10, -10, -10, -10, -10, -20,
+	-10, 5, 0, 0, 0, 0, 5, -10,
+	-10, 10, 10, 10, 10, 10, 10, -10,
+	-10, 0, 10, 10, 10, 10, 0, -10,
+	-10, 5, 5, 10, 10, 5, 5, -10,
+	-10, 0, 5, 10, 10, 5, 0, -10,
+	-10, 0, 0, 0, 0, 0, 0, -10,
+	-20, -10, -10, -10, -10, -10, -10, -20,
+}
+
+var PstRook = [64]int{
 	0, 0, 0, 5, 5, 0, 0, 0,
-	0, 0, 10, 10, 10, 10, 0, 0,
-	0, 0, 10, 20, 20, 10, 5, 0,
-	5, 10, 15, 20, 20, 15, 10, 5,
-	5, 10, 10, 20, 20, 10, 10, 5,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
+	-5, 0, 0, 0, 0, 0, 0, -5,
+	-5, 0, 0, 0, 0, 0, 0, -5,
+	-5, 0, 0, 0, 0, 0, 0, -5,
+	-5, 0, 0, 0, 0, 0, 0, -5,
+	-5, 0, 0, 0, 0, 0, 0, -5,
+	5, 10, 10, 10, 10, 10, 10,
+	5, 0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var BishopTable = [64]int{
-	0, 0, -10, 0, 0, -10, 0, 0,
-	0, 0, 0, 10, 10, 0, 0, 0,
-	0, 0, 10, 15, 15, 10, 0, 0,
-	0, 10, 15, 20, 20, 15, 10, 0,
-	0, 10, 15, 20, 20, 15, 10, 0,
-	0, 0, 10, 15, 15, 10, 0, 0,
-	0, 0, 0, 10, 10, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
+var PstKingMG = [64]int{
+	20, 30, 10, 0, 0, 10, 30, 20,
+	20, 20, 0, 0, 0, 0, 20, 20,
+	-10, -20, -20, -20, -20, -20, -20, -10,
+	-20, -30, -30, -40, -40, -30, -30, -20,
+	-30, -40, -40, -50, -50, -40, -40, -30,
+	-30, -40, -40, -50, -50, -40, -40, -30,
+	-30, -40, -40, -50, -50, -40, -40, -30,
+	-30, -40, -40, -50, -50, -40, -40, -30,
 }
 
-var RookTable = [64]int{
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	0, 0, 5, 10, 10, 5, 0, 0,
-	25, 25, 25, 25, 25, 25, 25, 25,
-	0, 0, 5, 10, 10, 5, 0, 0,
+var PstKingEG = [64]int{
+	-50, -30, -30, -30, -30, -30, -30, -50,
+	-30, -30, 0, 0, 0, 0, -30, -30,
+	-30, -10, 20, 30, 30, 20, -10, -30,
+	-30, -10, 30, 40, 40, 30, -10, -30,
+	-30, -10, 30, 40, 40, 30, -10, -30,
+	-30, -10, 20, 30, 30, 20, -10, -30,
+	-30, -20, -10, 0, 0, -10, -20, -30,
+	-50, -40, -30, -20, -20, -30, -40, -50,
 }
 
-var KingE = [64]int{
-	-50, -10, 0, 0, 0, 0, -10, -50,
-	-10, 0, 10, 10, 10, 10, 0, -10,
-	0, 10, 20, 20, 20, 20, 10, 0,
-	0, 10, 20, 40, 40, 20, 10, 0,
-	0, 10, 20, 40, 40, 20, 10, 0,
-	0, 10, 20, 20, 20, 20, 10, 0,
-	-10, 0, 10, 10, 10, 10, 0, -10,
-	-50, -10, 0, 0, 0, 0, -10, -50,
-}
-
-var KingO = [64]int{
-	0, 5, 5, -10, -10, 0, 10, 5,
-	-30, -30, -30, -30, -30, -30, -30, -30,
-	-50, -50, -50, -50, -50, -50, -50, -50,
-	-70, -70, -70, -70, -70, -70, -70, -70,
-	-70, -70, -70, -70, -70, -70, -70, -70,
-	-70, -70, -70, -70, -70, -70, -70, -70,
-	-70, -70, -70, -70, -70, -70, -70, -70,
-	-70, -70, -70, -70, -70, -70, -70, -70,
-}
-
-var VictimScore = [13]int{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
-var MvvLvaScores [13][13]int
-
-func InitMvvLva() {
-	for Attacker := wPawn; Attacker <= bKing; Attacker++ {
-		for Victim := wPawn; Victim <= bKing; Victim++ {
-			MvvLvaScores[Victim][Attacker] = VictimScore[Victim] + 6 - (VictimScore[Attacker] / 100)
-		}
-	}
-}
-
-func MIRROR(sq int) int {
-	return Mirror64[sq]
-}
-
-func calculatePieceMobility(piece uint8, sq int, pos *BoardStruct) int {
-	var list MoveList
-
-	mg := MoveGen{
-		pos:  pos,
-		list: &list,
-		side: pos.SideToMove,
-		quit: false,
-	}
-
-	if IsKn(piece) && PieceCol[piece] == pos.SideToMove {
-		mg.GenKnightMoves(sq)
-		return list.Count / 2
-	}
-
-	if IsBQ(piece) && PieceCol[piece] == pos.SideToMove {
-		mg.GenBishopMoves(sq)
-		return list.Count / 2
-	}
-
-	if IsRQ(piece) && PieceCol[piece] == pos.SideToMove {
-		mg.GenRookMoves(sq)
-		return list.Count / 3
-	}
-
-	return 0
-}
+var PieceVal = [13]int{0, 100, 320, 330, 500, 900, 20_000, 100, 320, 330, 500, 900, 20_000}
 
 func MaterialDraw(pos *BoardStruct) bool {
 	if pos.PieceNum[wRook] == 0 && pos.PieceNum[bRook] == 0 &&
@@ -182,7 +141,7 @@ func EvalPosition(pos *BoardStruct) int {
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 
-		score += PawnTable[sq]
+		score += PstPawn[sq]
 
 		if (IsolatedMask[sq] & pos.Pawns[White]) == 0 {
 			score += PawnIsolated
@@ -198,7 +157,7 @@ func EvalPosition(pos *BoardStruct) int {
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 
-		score -= PawnTable[MIRROR(sq)]
+		score -= PstPawn[MIRROR(sq)]
 
 		if (IsolatedMask[sq] & pos.Pawns[Black]) == 0 {
 			score -= PawnIsolated
@@ -212,36 +171,31 @@ func EvalPosition(pos *BoardStruct) int {
 	piece = wKnight
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score += KnightTable[sq]
-		score += calculatePieceMobility(piece, sq, pos)
+		score += PstKnight[sq]
 	}
 
 	piece = bKnight
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= KnightTable[MIRROR(sq)]
-		score -= calculatePieceMobility(piece, sq, pos)
+		score -= PstKnight[MIRROR(sq)]
 	}
 
 	piece = wBishop
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score += BishopTable[sq]
-		score += calculatePieceMobility(piece, sq, pos)
+		score += PstBishop[sq]
 	}
 
 	piece = bBishop
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= BishopTable[MIRROR(sq)]
-		score -= calculatePieceMobility(piece, sq, pos)
+		score -= PstBishop[MIRROR(sq)]
 	}
 
 	piece = wRook
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score += RookTable[sq]
-		score += calculatePieceMobility(piece, sq, pos)
+		score += PstRook[sq]
 
 		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
 			score += RookOpenFile
@@ -253,8 +207,7 @@ func EvalPosition(pos *BoardStruct) int {
 	piece = bRook
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= RookTable[MIRROR(sq)]
-		score -= calculatePieceMobility(piece, sq, pos)
+		score -= PstRook[MIRROR(sq)]
 
 		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
 			score -= RookOpenFile
@@ -289,18 +242,18 @@ func EvalPosition(pos *BoardStruct) int {
 	sq = pos.PieceList[piece][0]
 
 	if pos.Material[Black] <= EndGameMaterial() {
-		score += KingE[sq]
+		score += PstKingEG[sq]
 	} else {
-		score += KingO[sq]
+		score += PstKingMG[sq]
 	}
 
 	piece = bKing
 	sq = pos.PieceList[piece][0]
 
 	if pos.Material[White] <= EndGameMaterial() {
-		score -= KingE[MIRROR(sq)]
+		score -= PstKingEG[MIRROR(sq)]
 	} else {
-		score -= KingO[MIRROR(sq)]
+		score -= PstKingMG[MIRROR(sq)]
 	}
 
 	if pos.PieceNum[wBishop] >= 2 {

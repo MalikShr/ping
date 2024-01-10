@@ -7,6 +7,17 @@ type MoveList struct {
 	Count int
 }
 
+var VictimScore = [13]int{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
+var MvvLvaScores [13][13]int
+
+func InitMvvLva() {
+	for Attacker := wPawn; Attacker <= bKing; Attacker++ {
+		for Victim := wPawn; Victim <= bKing; Victim++ {
+			MvvLvaScores[Victim][Attacker] = VictimScore[Victim] + 6 - (VictimScore[Attacker] / 100)
+		}
+	}
+}
+
 func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
 	list.Moves[list.Count].Move = move
 

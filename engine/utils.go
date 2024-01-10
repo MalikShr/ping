@@ -11,7 +11,6 @@ var (
 	PieceBig = [13]bool{false, false, true, true, true, true, true, false, true, true, true, true, true}
 	PieceMaj = [13]bool{false, false, false, false, true, true, true, false, false, false, true, true, true}
 	PieceMin = [13]bool{false, false, true, true, false, false, false, false, true, true, false, false, false}
-	PieceVal = [13]int{0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000}
 	PieceCol = [13]uint8{Both, White, White, White, White, White, White, Black, Black, Black, Black, Black, Black}
 
 	PiecePawn        = [13]bool{false, true, false, false, false, false, false, true, false, false, false, false, false}
@@ -125,6 +124,10 @@ func ParseMove(ptrChar string, pos *BoardStruct) int {
 	}
 
 	return NoMove
+}
+
+func MIRROR(sq int) int {
+	return Mirror64[sq]
 }
 
 func CheckBoard(pos *BoardStruct) bool {
