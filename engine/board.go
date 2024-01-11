@@ -81,7 +81,7 @@ type BoardStruct struct {
 	Squares [64]uint8
 	Pieces  [13]Bitboard
 	Pawns   [3]Bitboard
-	Sides   [2]Bitboard
+	Sides   [3]Bitboard
 
 	KingSq [2]int
 
@@ -157,7 +157,6 @@ func (pos *BoardStruct) ResetBoard() {
 	for i := 0; i < 2; i++ {
 		pos.Material[i] = 0
 		pos.Pawns[i] = 0
-		pos.Sides[i] = 0
 	}
 
 	for i := 0; i < 13; i++ {
@@ -166,6 +165,7 @@ func (pos *BoardStruct) ResetBoard() {
 
 	for i := 0; i < 3; i++ {
 		pos.Pawns[i] = 0
+		pos.Sides[i] = 0
 	}
 
 	for i := 0; i < 13; i++ {
@@ -210,6 +210,7 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 			}
 
 			pos.Sides[color].SetBit(sq)
+			pos.Sides[Both].SetBit(sq)
 			pos.Pieces[piece].SetBit(sq)
 
 			if piece == wPawn {

@@ -123,3 +123,67 @@ func GenerateAllPawnCaptureMoves(sq int, pos *BoardStruct, list *MoveList, side 
 		}
 	}
 }
+
+func GenKnightAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := KnightAttacks[sq] & ^ownPieces
+
+	for attacks != 0 {
+		targetSq := attacks.PopBit()
+
+		if block&(1<<targetSq) != 0 {
+			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Squares[targetSq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+}
+
+func GenBishopAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := GetBishopAttacks(sq, pos.Sides[Both]) & ^ownPieces
+
+	for attacks != 0 {
+		targetSq := attacks.PopBit()
+
+		if block&(1<<targetSq) != 0 {
+			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Squares[targetSq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+}
+
+func GenRookAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := GetRookAttacks(sq, pos.Sides[Both]) & ^ownPieces
+
+	for attacks != 0 {
+		targetSq := attacks.PopBit()
+
+		if block&(1<<targetSq) != 0 {
+			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Squares[targetSq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
+	}
+}
+
+func GenKingAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := KingAttacks[square] & ^ownPieces
+
+	for attacks != 0 {
+		sq := attacks.PopBit()
+
+		if block&(1<<sq) != 0 {
+			list.AddCaptureMove(pos, MOVE(square, sq, pos.Squares[sq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(square, sq, Empty, Empty, 0))
+		}
+	}
+}
