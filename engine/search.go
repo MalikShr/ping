@@ -247,7 +247,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 			BestMove = list.Moves[MoveNum].Move
 
 			if list.Moves[MoveNum].Move&MFLAGCAP != 0 {
-				pos.SearchHistory[pos.Pieces[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth
+				pos.SearchHistory[pos.Squares[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth
 			}
 		}
 	}

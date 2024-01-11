@@ -20,6 +20,7 @@ var (
 	PieceBishopQueen = [13]bool{false, false, false, true, false, true, false, false, false, true, false, true, false}
 	PieceSlides      = [13]bool{false, false, false, true, true, true, false, false, false, true, true, true, false}
 	NonPawnPieces    = [10]uint8{wKnight, wBishop, wRook, wQueen, wKing, bKnight, bBishop, bRook, bQueen, bKing}
+	SliderPieces     = []uint8{wBishop, wRook, wQueen, bBishop, bRook, bQueen}
 
 	Mirror64 = [64]int{
 		56, 57, 58, 59, 60, 61, 62, 63,
@@ -149,7 +150,7 @@ func CheckBoard(pos *BoardStruct) bool {
 	for tPiece := wPawn; tPiece <= bKing; tPiece++ {
 		for tPieceNum := 0; tPieceNum < pos.PieceNum[tPiece]; tPieceNum++ {
 			sq := pos.PieceList[tPiece][tPieceNum]
-			if pos.Pieces[sq] != tPiece {
+			if pos.Squares[sq] != tPiece {
 				fmt.Println("Error: Piece mismatch at square", sq)
 				return false
 			}
@@ -158,7 +159,7 @@ func CheckBoard(pos *BoardStruct) bool {
 
 	// Check piece count and other counters
 	for sq := 0; sq < 64; sq++ {
-		tPiece := pos.Pieces[sq]
+		tPiece := pos.Squares[sq]
 		tPieceNum[tPiece]++
 		color := PieceCol[tPiece]
 		if PieceBig[tPiece] {
@@ -203,7 +204,7 @@ func CheckBoard(pos *BoardStruct) bool {
 	// Check bitboards squares
 	for tPawns[White] != 0 {
 		sq := tPawns[White].PopBit()
-		if pos.Pieces[sq] != wPawn {
+		if pos.Squares[sq] != wPawn {
 			fmt.Println("Error: White pawn bitboard mismatch at square", sq)
 			return false
 		}
@@ -211,7 +212,7 @@ func CheckBoard(pos *BoardStruct) bool {
 
 	for tPawns[Black] != 0 {
 		sq := tPawns[Black].PopBit()
-		if pos.Pieces[sq] != bPawn {
+		if pos.Squares[sq] != bPawn {
 			fmt.Println("Error: Black pawn bitboard mismatch at square", sq)
 			return false
 		}
@@ -219,7 +220,7 @@ func CheckBoard(pos *BoardStruct) bool {
 
 	for tPawns[Both] != 0 {
 		sq := tPawns[Both].PopBit()
-		if pos.Pieces[sq] != bPawn && pos.Pieces[sq] != wPawn {
+		if pos.Squares[sq] != bPawn && pos.Squares[sq] != wPawn {
 			fmt.Println("Error: Combined pawn bitboard mismatch at square", sq)
 			return false
 		}
@@ -245,12 +246,12 @@ func CheckBoard(pos *BoardStruct) bool {
 		return false
 	}
 
-	if pos.Pieces[pos.KingSq[White]] != wKing {
+	if pos.Squares[pos.KingSq[White]] != wKing {
 		fmt.Println("Error: White king position mismatch")
 		return false
 	}
 
-	if pos.Pieces[pos.KingSq[Black]] != bKing {
+	if pos.Squares[pos.KingSq[Black]] != bKing {
 		fmt.Println("Error: Black king position mismatch")
 		return false
 	}

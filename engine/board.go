@@ -78,9 +78,10 @@ const (
 type BoardStruct struct {
 	Hash uint64
 
-	Pieces [64]uint8
-	Pawns  [3]Bitboard
-	Sides  [2]Bitboard
+	Squares [64]uint8
+	Pieces  [13]Bitboard
+	Pawns   [3]Bitboard
+	Sides   [2]Bitboard
 
 	KingSq [2]int
 
@@ -150,13 +151,17 @@ func FR2SQ(f int, r int) int {
 func (pos *BoardStruct) ResetBoard() {
 
 	for i := 0; i < 64; i++ {
-		pos.Pieces[i] = Empty
+		pos.Squares[i] = Empty
 	}
 
 	for i := 0; i < 2; i++ {
 		pos.Material[i] = 0
 		pos.Pawns[i] = 0
 		pos.Sides[i] = 0
+	}
+
+	for i := 0; i < 13; i++ {
+		pos.Pieces[i] = 0
 	}
 
 	for i := 0; i < 3; i++ {
@@ -186,7 +191,7 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 
 	for i := 0; i < 64; i++ {
 		sq := i
-		piece := pos.Pieces[i]
+		piece := pos.Squares[i]
 
 		if piece != Empty {
 			color := PieceCol[piece]
@@ -205,6 +210,7 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 			}
 
 			pos.Sides[color].SetBit(sq)
+			pos.Pieces[piece].SetBit(sq)
 
 			if piece == wPawn {
 				pos.Pawns[White].SetBit(sq)
@@ -236,7 +242,7 @@ func (pos *BoardStruct) ParseFen(fen string) {
 		switch char {
 		case 'p', 'n', 'b', 'r', 'q', 'k', 'P', 'N', 'B', 'R', 'Q', 'K':
 			piece := CharToPiece[char]
-			pos.Pieces[sq] = piece
+			pos.Squares[sq] = piece
 			sq++
 		case '/':
 			sq -= 16
@@ -282,7 +288,7 @@ func (pos *BoardStruct) String() string {
 		boardStr += fmt.Sprintf("%d  ", rank+1)
 		for file := FA; file <= FH; file++ {
 			sq := FR2SQ(file, rank)
-			piece := pos.Pieces[sq]
+			piece := pos.Squares[sq]
 			boardStr += fmt.Sprintf("%3c", PceChar[piece])
 		}
 		boardStr += "\n"

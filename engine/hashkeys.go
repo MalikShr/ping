@@ -30,7 +30,7 @@ func GeneratePosKey(pos *BoardStruct) uint64 {
 
 	// Pieces
 	for sq := 0; sq < 64; sq++ {
-		piece = pos.Pieces[sq]
+		piece = pos.Squares[sq]
 
 		if piece != Empty {
 			// Validate piece

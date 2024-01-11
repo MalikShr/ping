@@ -27,7 +27,7 @@ func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
 		list.Moves[list.Count].Score = 800_000
 	} else {
 
-		list.Moves[list.Count].Score = pos.SearchHistory[pos.Pieces[FROMSQ(move)]][TOSQ(move)]
+		list.Moves[list.Count].Score = pos.SearchHistory[pos.Squares[FROMSQ(move)]][TOSQ(move)]
 	}
 
 	list.Count++
@@ -35,7 +35,7 @@ func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
 
 func (list *MoveList) AddCaptureMove(pos *BoardStruct, move int) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = MvvLvaScores[CAPTURED(move)][pos.Pieces[FROMSQ(move)]] + 1_000_000
+	list.Moves[list.Count].Score = MvvLvaScores[CAPTURED(move)][pos.Squares[FROMSQ(move)]] + 1_000_000
 	list.Count++
 }
 

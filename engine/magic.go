@@ -150,7 +150,7 @@ func GenKnightAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStru
 		targetSq := attacks.PopBit()
 
 		if block&(1<<targetSq) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Squares[targetSq], Empty, 0))
 			continue
 		}
 		if quiet {
@@ -166,7 +166,7 @@ func GenKingAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardSt
 		sq := attacks.PopBit()
 
 		if block&(1<<sq) != 0 {
-			list.AddCaptureMove(pos, MOVE(square, sq, pos.Pieces[sq], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(square, sq, pos.Squares[sq], Empty, 0))
 			continue
 		}
 		if quiet {
@@ -189,7 +189,7 @@ func GenBishopAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStru
 		attacks |= 1 << (r*8 + f)
 
 		if block&(1<<(r*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Pieces[r*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Squares[r*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -204,7 +204,7 @@ func GenBishopAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStru
 
 		attacks |= 1 << (r*8 + f)
 		if block&(1<<(r*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Pieces[r*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Squares[r*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -219,7 +219,7 @@ func GenBishopAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStru
 
 		attacks |= 1 << (r*8 + f)
 		if block&(1<<(r*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Pieces[r*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Squares[r*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -234,7 +234,7 @@ func GenBishopAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStru
 
 		attacks |= 1 << (r*8 + f)
 		if block&(1<<(r*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Pieces[r*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+f, pos.Squares[r*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -256,7 +256,7 @@ func GenRookAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct
 		attacks |= 1 << (rank*8 + f)
 
 		if block&(1<<(rank*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, rank*8+f, pos.Pieces[rank*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, rank*8+f, pos.Squares[rank*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -271,7 +271,7 @@ func GenRookAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct
 		attacks |= 1 << (rank*8 + f)
 
 		if block&(1<<(rank*8+f)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, rank*8+f, pos.Pieces[rank*8+f], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, rank*8+f, pos.Squares[rank*8+f], Empty, 0))
 			break
 		}
 		if quiet {
@@ -286,7 +286,7 @@ func GenRookAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct
 		attacks |= 1 << (r*8 + file)
 
 		if block&(1<<(r*8+file)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+file, pos.Pieces[r*8+file], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+file, pos.Squares[r*8+file], Empty, 0))
 			break
 		}
 		if quiet {
@@ -301,7 +301,7 @@ func GenRookAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct
 		attacks |= 1 << (r*8 + file)
 
 		if block&(1<<(r*8+file)) != 0 {
-			list.AddCaptureMove(pos, MOVE(sq, r*8+file, pos.Pieces[r*8+file], Empty, 0))
+			list.AddCaptureMove(pos, MOVE(sq, r*8+file, pos.Squares[r*8+file], Empty, 0))
 			break
 		}
 		if quiet {

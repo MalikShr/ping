@@ -90,7 +90,7 @@ func PolyKeyFromBoard(board *BoardStruct) uint64 {
 	offset := 0
 
 	for sq := 0; sq < 64; sq++ {
-		piece := board.Pieces[sq]
+		piece := board.Squares[sq]
 		if piece != NoSq && piece != Empty {
 			polyPiece := ConvertToPolyPiece[piece]
 			finalKey ^= Random64Poly[(64*polyPiece)+sq]
