@@ -33,8 +33,8 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 
 	for move != NoMove && count < depth {
 
-		if MoveExists(pos, move) {
-			pos.MakeMove(move)
+		if pos.MoveExists(move) {
+			pos.DoMove(move)
 			search.PvArray[count] = move
 			count++
 		} else {
@@ -44,7 +44,7 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 	}
 
 	for pos.Ply > 0 {
-		pos.TakeMove()
+		pos.UndoMove()
 	}
 
 	return count
@@ -142,13 +142,13 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 
 		PickNextMove(MoveNum, &list)
 
-		if !pos.MakeMove(list.Moves[MoveNum].Move) {
+		if !pos.DoMove(list.Moves[MoveNum].Move) {
 			continue
 		}
 
 		Legal++
 		Score = -Quiescence(-beta, -alpha, pos, info)
-		pos.TakeMove()
+		pos.UndoMove()
 
 		if info.Stopped {
 			return 0
@@ -217,13 +217,13 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
 		PickNextMove(MoveNum, &list)
 
-		if !pos.MakeMove(list.Moves[MoveNum].Move) {
+		if !pos.DoMove(list.Moves[MoveNum].Move) {
 			continue
 		}
 
 		Legal++
 		Score = -AlphaBeta(-beta, -alpha, depth-1, pos, info)
-		pos.TakeMove()
+		pos.UndoMove()
 
 		if info.Stopped {
 			return 0
@@ -247,7 +247,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 			BestMove = list.Moves[MoveNum].Move
 
 			if list.Moves[MoveNum].Move&MFLAGCAP != 0 {
-				pos.SearchHistory[pos.Squares[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth
+				pos.SearchHistory[pos.Squares[FROMSQ(BestMove)]][ToSq(BestMove)] += depth
 			}
 		}
 	}

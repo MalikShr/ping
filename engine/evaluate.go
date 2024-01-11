@@ -11,6 +11,10 @@ const (
 	BishopPair        = 30
 )
 
+var BlackPassedMask [64]Bitboard
+var WhitePassedMask [64]Bitboard
+var IsolatedMask [64]Bitboard
+
 var PawnPassed = [8]int{0, 5, 10, 20, 35, 60, 100, 200}
 
 var PstPawn = [64]int{
@@ -80,6 +84,85 @@ var PstKingEG = [64]int{
 }
 
 var PieceVal = [13]int{0, 100, 320, 330, 500, 900, 20_000, 100, 320, 330, 500, 900, 20_000}
+
+func InitEvalMasks() {
+
+	sq := NoSq
+
+	for sq = 0; sq < 8; sq++ {
+		FileBBMask[sq] = 0
+		RankBBMask[sq] = 0
+	}
+
+	for r := R8; r >= R1; r-- {
+		for f := FA; f <= FH; f++ {
+			sq = r*8 + f
+			FileBBMask[f] |= (1 << sq)
+			RankBBMask[r] |= (1 << sq)
+		}
+	}
+
+	for r := R8; r >= R1; r-- {
+		for f := FA; f <= FH; f++ {
+			sq = r*8 + f
+			FileBBMask[f] |= (1 << sq)
+			RankBBMask[r] |= (1 << sq)
+		}
+	}
+
+	for sq := 0; sq < 64; sq++ {
+		IsolatedMask[sq] = 0
+		WhitePassedMask[sq] = 0
+		BlackPassedMask[sq] = 0
+	}
+
+	for sq := 0; sq < 64; sq++ {
+		tsq := sq + 8
+
+		for tsq < 64 {
+			WhitePassedMask[sq] |= (1 << tsq)
+			tsq += 8
+		}
+
+		tsq = sq - 8
+		for tsq >= 0 {
+			BlackPassedMask[sq] |= (1 << tsq)
+			tsq -= 8
+		}
+
+		if FileOf(sq) > FA {
+			IsolatedMask[sq] |= FileBBMask[FileOf(sq)-1]
+
+			tsq = sq + 7
+			for tsq < 64 {
+				WhitePassedMask[sq] |= (1 << tsq)
+				tsq += 8
+			}
+
+			tsq = sq - 9
+			for tsq >= 0 {
+				BlackPassedMask[sq] |= (1 << tsq)
+				tsq -= 8
+			}
+		}
+
+		if FileOf(sq) < FH {
+			IsolatedMask[sq] |= FileBBMask[FileOf(sq)+1]
+
+			tsq = sq + 9
+			for tsq < 64 {
+				WhitePassedMask[sq] |= (1 << tsq)
+				tsq += 8
+			}
+
+			tsq = sq - 7
+			for tsq >= 0 {
+				BlackPassedMask[sq] |= (1 << tsq)
+				tsq -= 8
+			}
+		}
+	}
+}
 
 func MaterialDraw(pos *BoardStruct) bool {
 	if pos.PieceNum[wRook] == 0 && pos.PieceNum[bRook] == 0 &&

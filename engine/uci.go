@@ -54,7 +54,7 @@ func (inter *UCIInterface) ParsePosition(cmd string, pos *BoardStruct) {
 				break
 			}
 
-			pos.MakeMove(move)
+			pos.DoMove(move)
 			pos.Ply = 0
 		}
 	}

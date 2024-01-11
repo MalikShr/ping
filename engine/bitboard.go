@@ -11,6 +11,27 @@ var BitTable = [64]int{
 	58, 20, 37, 17, 36, 8,
 }
 
+var SetMask [64]Bitboard
+var ClearMask [64]Bitboard
+
+var FileBBMask [8]Bitboard
+var RankBBMask [8]Bitboard
+
+func InitBitMasks() {
+	for i := 0; i < 64; i++ {
+		SetMask[i] = 0
+		ClearMask[i] = 0
+	}
+
+	for i := 0; i < 64; i++ {
+		SetMask[i] = (1 << i)
+	}
+
+	for i, value := range SetMask {
+		ClearMask[i] = ^value
+	}
+}
+
 func (bb *Bitboard) PopBit() int {
 	b := *bb ^ (*bb - 1)
 	fold := uint32((b & 0xffffffff) ^ (b >> 32))

@@ -34,14 +34,52 @@ var (
 	}
 )
 
-// Given a board square, return it's file.
+// A constant mapping piece characters to Piece objects.
+var CharToPiece = map[byte]uint8{
+	'P': wPawn,
+	'N': wKnight,
+	'B': wBishop,
+	'R': wRook,
+	'Q': wQueen,
+	'K': wKing,
+	'p': bPawn,
+	'n': bKnight,
+	'b': bBishop,
+	'r': bRook,
+	'q': bQueen,
+	'k': bKing,
+}
+
 func FileOf(sq int) int {
 	return sq % 8
 }
 
-// Given a board square, return it's rank.
 func RankOf(sq int) int {
 	return sq / 8
+}
+
+func FR2SQ(f int, r int) int {
+	return f + r*8
+}
+
+func IsBQ(p uint8) bool {
+	return PieceBishopQueen[p]
+}
+
+func IsRQ(p uint8) bool {
+	return PieceRookQueen[p]
+}
+
+func IsKn(p uint8) bool {
+	return PieceKnight[p]
+}
+
+func IsKi(p uint8) bool {
+	return PieceKing[p]
+}
+
+func FROMSQ(m int) int {
+	return m & 0x7F
 }
 
 func PrMove(move int) string {
@@ -50,10 +88,10 @@ func PrMove(move int) string {
 
 	ff := FileOf(FROMSQ(move))
 	rf := RankOf(FROMSQ(move))
-	ft := FileOf(TOSQ(move))
-	rt := RankOf(TOSQ(move))
+	ft := FileOf(ToSq(move))
+	rt := RankOf(ToSq(move))
 
-	promoted := PROMOTED(move)
+	promoted := Promoted(move)
 
 	if promoted != 0 {
 		pchar := 'q'
@@ -107,8 +145,8 @@ func ParseMove(ptrChar string, pos *BoardStruct) int {
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
 		move := list.Moves[moveNum].Move
-		if FROMSQ(move) == from && TOSQ(move) == to {
-			promPiece = PROMOTED(move)
+		if FROMSQ(move) == from && ToSq(move) == to {
+			promPiece = Promoted(move)
 			if promPiece != Empty {
 				if IsRQ(promPiece) && !IsBQ(promPiece) && ptrChar[4] == 'r' {
 					return move
@@ -130,136 +168,4 @@ func ParseMove(ptrChar string, pos *BoardStruct) int {
 
 func MIRROR(sq int) int {
 	return Mirror64[sq]
-}
-
-func CheckBoard(pos *BoardStruct) bool {
-	var tPieceNum [13]int
-	var tBigPce [2]int
-	var tMajPce [2]int
-	var tMinPce [2]int
-	var tMaterial [2]int
-
-	var pcount int
-
-	var tPawns [3]Bitboard
-	tPawns[White] = pos.Pawns[White]
-	tPawns[Black] = pos.Pawns[Black]
-	tPawns[Both] = pos.Pawns[Both]
-
-	// Check piece lists
-	for tPiece := wPawn; tPiece <= bKing; tPiece++ {
-		for tPieceNum := 0; tPieceNum < pos.PieceNum[tPiece]; tPieceNum++ {
-			sq := pos.PieceList[tPiece][tPieceNum]
-			if pos.Squares[sq] != tPiece {
-				fmt.Println("Error: Piece mismatch at square", sq)
-				return false
-			}
-		}
-	}
-
-	// Check piece count and other counters
-	for sq := 0; sq < 64; sq++ {
-		tPiece := pos.Squares[sq]
-		tPieceNum[tPiece]++
-		color := PieceCol[tPiece]
-		if PieceBig[tPiece] {
-			tBigPce[color]++
-		}
-		if PieceMin[tPiece] {
-			tMinPce[color]++
-		}
-		if PieceMaj[tPiece] {
-			tMajPce[color]++
-		}
-
-		if color < 2 {
-			tMaterial[color] += PieceVal[tPiece]
-		}
-	}
-
-	for tPiece := wPawn; tPiece <= bKing; tPiece++ {
-		if tPieceNum[tPiece] != pos.PieceNum[tPiece] {
-			fmt.Println("Error: Piece count mismatch for piece", tPiece)
-			return false
-		}
-	}
-
-	// Check bitboards count
-	pcount = tPawns[White].CountBits()
-	if pcount != pos.PieceNum[wPawn] {
-		fmt.Println("Error: White pawn count mismatch")
-		return false
-	}
-	pcount = tPawns[Black].CountBits()
-	if pcount != pos.PieceNum[bPawn] {
-		fmt.Println("Error: Black pawn count mismatch")
-		return false
-	}
-	pcount = tPawns[Both].CountBits()
-	if pcount != pos.PieceNum[bPawn]+pos.PieceNum[wPawn] {
-		fmt.Println("Error: Combined pawn count mismatch")
-		return false
-	}
-
-	// Check bitboards squares
-	for tPawns[White] != 0 {
-		sq := tPawns[White].PopBit()
-		if pos.Squares[sq] != wPawn {
-			fmt.Println("Error: White pawn bitboard mismatch at square", sq)
-			return false
-		}
-	}
-
-	for tPawns[Black] != 0 {
-		sq := tPawns[Black].PopBit()
-		if pos.Squares[sq] != bPawn {
-			fmt.Println("Error: Black pawn bitboard mismatch at square", sq)
-			return false
-		}
-	}
-
-	for tPawns[Both] != 0 {
-		sq := tPawns[Both].PopBit()
-		if pos.Squares[sq] != bPawn && pos.Squares[sq] != wPawn {
-			fmt.Println("Error: Combined pawn bitboard mismatch at square", sq)
-			return false
-		}
-	}
-
-	if tMaterial[White] != pos.Material[White] || tMaterial[Black] != pos.Material[Black] {
-		fmt.Println("Error: Material mismatch")
-		return false
-	}
-
-	if pos.SideToMove != White && pos.SideToMove != Black {
-		fmt.Println("Error: Invalid side")
-		return false
-	}
-
-	if GeneratePosKey(pos) != pos.Hash {
-		fmt.Println("Error: Position key mismatch")
-		return false
-	}
-
-	if pos.EnPas != NoSq && (RankOf(pos.EnPas) != R6 || (pos.SideToMove == Black && RankOf(pos.EnPas) != R3)) {
-		fmt.Println("Error: Invalid en passant square")
-		return false
-	}
-
-	if pos.Squares[pos.KingSq[White]] != wKing {
-		fmt.Println("Error: White king position mismatch")
-		return false
-	}
-
-	if pos.Squares[pos.KingSq[Black]] != bKing {
-		fmt.Println("Error: Black king position mismatch")
-		return false
-	}
-
-	if pos.CastlePerm < 0 || pos.CastlePerm > 15 {
-		fmt.Println("Error: Invalid castle permissions")
-		return false
-	}
-
-	return true
 }

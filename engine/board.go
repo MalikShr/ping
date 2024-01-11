@@ -114,40 +114,6 @@ type State struct {
 	Rule50     int
 }
 
-var SetMask [64]Bitboard
-var ClearMask [64]Bitboard
-
-var PieceKeys [13][64]uint64
-var SideKey uint64
-var CastleKeys [16]uint64
-
-var FileBBMask [8]Bitboard
-var RankBBMask [8]Bitboard
-
-var BlackPassedMask [64]Bitboard
-var WhitePassedMask [64]Bitboard
-var IsolatedMask [64]Bitboard
-
-// A constant mapping piece characters to Piece objects.
-var CharToPiece = map[byte]uint8{
-	'P': wPawn,
-	'N': wKnight,
-	'B': wBishop,
-	'R': wRook,
-	'Q': wQueen,
-	'K': wKing,
-	'p': bPawn,
-	'n': bKnight,
-	'b': bBishop,
-	'r': bRook,
-	'q': bQueen,
-	'k': bKing,
-}
-
-func FR2SQ(f int, r int) int {
-	return f + r*8
-}
-
 func (pos *BoardStruct) ResetBoard() {
 
 	for i := 0; i < 64; i++ {
@@ -223,6 +189,270 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 			}
 		}
 	}
+}
+
+func (pos *BoardStruct) DoMove(move int) bool {
+	from := FROMSQ(move)
+	to := ToSq(move)
+
+	side := pos.SideToMove
+
+	state := State{
+		Hash:       pos.Hash,
+		Move:       move,
+		Rule50:     pos.Rule50,
+		EnPas:      pos.EnPas,
+		CastlePerm: pos.CastlePerm,
+	}
+
+	if move&MFLAGEP != 0 {
+		if side == White {
+			pos.ClearPiece(to - 8)
+		} else {
+			pos.ClearPiece(to + 8)
+		}
+	} else if move&MFLAGCA != 0 {
+		switch to {
+		case C1:
+			pos.MovePiece(A1, D1)
+		case C8:
+			pos.MovePiece(A8, D8)
+		case G1:
+			pos.MovePiece(H1, F1)
+		case G8:
+			pos.MovePiece(H8, F8)
+		default:
+			return false
+		}
+	}
+
+	if pos.EnPas != NoSq {
+		pos.HASHEP()
+	}
+	pos.HASHCASTLE()
+
+	pos.History[pos.HistoryPly] = state
+
+	pos.CastlePerm &= CastlePerm[from]
+	pos.CastlePerm &= CastlePerm[to]
+	pos.EnPas = NoSq
+
+	pos.HASHCASTLE()
+
+	captured := Captured(move)
+	pos.Rule50++
+
+	if captured != Empty {
+		pos.ClearPiece(to)
+		pos.Rule50 = 0
+	}
+
+	pos.HistoryPly++
+	pos.Ply++
+
+	if PiecePawn[pos.Squares[from]] {
+		pos.Rule50 = 0
+		if move&MFLAGPS != 0 {
+			if side == White {
+				pos.EnPas = from + 8
+			} else {
+				pos.EnPas = from - 8
+			}
+			pos.HASHEP()
+		}
+	}
+
+	pos.MovePiece(from, to)
+
+	promotedPiece := Promoted(move)
+	if promotedPiece != Empty {
+		pos.ClearPiece(to)
+		pos.AddPiece(to, promotedPiece)
+	}
+
+	if PieceKing[pos.Squares[to]] {
+		pos.KingSq[pos.SideToMove] = to
+	}
+
+	pos.SideToMove ^= 1
+	pos.HASHSIDE()
+
+	if pos.SqAttacked(pos.KingSq[side], pos.SideToMove) {
+		pos.UndoMove()
+
+		return false
+	}
+
+	return true
+}
+
+func (pos *BoardStruct) UndoMove() {
+	pos.HistoryPly--
+	pos.Ply--
+
+	move := pos.History[pos.HistoryPly].Move
+	from := FROMSQ(move)
+	to := ToSq(move)
+
+	if pos.EnPas != NoSq {
+		pos.HASHEP()
+	}
+
+	pos.HASHCASTLE()
+
+	pos.CastlePerm = pos.History[pos.HistoryPly].CastlePerm
+	pos.Rule50 = pos.History[pos.HistoryPly].Rule50
+	pos.EnPas = pos.History[pos.HistoryPly].EnPas
+
+	if pos.EnPas != NoSq {
+		pos.HASHEP()
+	}
+	pos.HASHCASTLE()
+
+	pos.SideToMove ^= 1
+	pos.HASHSIDE()
+
+	if MFLAGEP&move != 0 {
+		if pos.SideToMove == White {
+			pos.AddPiece(to-8, bPawn)
+		} else {
+			pos.AddPiece(to+8, wPawn)
+		}
+	} else if MFLAGCA&move != 0 {
+		switch to {
+		case C1:
+			pos.MovePiece(D1, A1)
+		case C8:
+			pos.MovePiece(D8, A8)
+		case G1:
+			pos.MovePiece(F1, H1)
+		case G8:
+			pos.MovePiece(F8, H8)
+		}
+	}
+
+	pos.MovePiece(to, from)
+
+	if PieceKing[pos.Squares[from]] {
+		pos.KingSq[pos.SideToMove] = from
+	}
+
+	captured := Captured(move)
+	if captured != Empty {
+		pos.AddPiece(to, captured)
+	}
+
+	if Promoted(move) != Empty {
+		pos.ClearPiece(from)
+
+		pawn := wPawn
+
+		if PieceCol[Promoted(move)] == Black {
+			pawn = bPawn
+		}
+
+		pos.AddPiece(from, pawn)
+	}
+}
+
+func (pos *BoardStruct) MoveExists(move int) bool {
+	var list MoveList
+	GenerateAllMoves(pos, &list, true)
+
+	for moveNum := 0; moveNum < list.Count; moveNum++ {
+		if !pos.DoMove(list.Moves[moveNum].Move) {
+			continue
+		}
+		pos.UndoMove()
+		if list.Moves[moveNum].Move == move {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (pos *BoardStruct) MovePiece(from int, to int) {
+	piece := pos.Squares[from]
+	col := PieceCol[piece]
+
+	pos.Pieces[piece].ClearBit(from)
+	pos.Sides[col].ClearBit(from)
+	pos.Sides[Both].ClearBit(from)
+	pos.HASHPIECE(piece, from)
+	pos.Squares[from] = Empty
+
+	pos.Pieces[piece].SetBit(to)
+	pos.Sides[col].SetBit(to)
+	pos.Sides[Both].SetBit(to)
+	pos.HASHPIECE(piece, to)
+	pos.Squares[to] = piece
+
+	if !PieceBig[piece] {
+		pos.Pawns[col].ClearBit(from)
+		pos.Pawns[Both].ClearBit(from)
+		pos.Pawns[col].SetBit(to)
+		pos.Pawns[Both].SetBit(to)
+	}
+
+	for index := 0; index < pos.PieceNum[piece]; index++ {
+		if pos.PieceList[piece][index] == from {
+			pos.PieceList[piece][index] = to
+			break
+		}
+	}
+}
+
+func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
+	col := PieceCol[piece]
+
+	pos.HASHPIECE(piece, sq)
+
+	pos.Squares[sq] = piece
+	pos.Sides[col].SetBit(sq)
+	pos.Sides[Both].SetBit(sq)
+	pos.Pieces[piece].SetBit(sq)
+
+	if !PieceBig[piece] {
+		pos.Pawns[col].SetBit(sq)
+		pos.Pawns[Both].SetBit(sq)
+	}
+
+	pos.Material[col] += PieceVal[piece]
+	pos.PieceList[piece][pos.PieceNum[piece]] = sq
+
+	pos.PieceNum[piece]++
+}
+
+func (pos *BoardStruct) ClearPiece(sq int) {
+	piece := pos.Squares[sq]
+
+	col := PieceCol[piece]
+	tPieceNum := -1
+
+	pos.HASHPIECE(piece, sq)
+
+	pos.Sides[col].ClearBit(sq)
+	pos.Sides[Both].ClearBit(sq)
+	pos.Pieces[piece].ClearBit(sq)
+	pos.Squares[sq] = Empty
+	pos.Material[col] -= PieceVal[piece]
+
+	if !PieceBig[piece] {
+		pos.Pawns[col].ClearBit(sq)
+		pos.Pawns[Both].ClearBit(sq)
+	}
+
+	for i := 0; i < pos.PieceNum[piece]; i++ {
+		if pos.PieceList[piece][i] == sq {
+			tPieceNum = i
+			break
+		}
+	}
+
+	pos.PieceNum[piece]--
+
+	pos.PieceList[piece][tPieceNum] = pos.PieceList[piece][pos.PieceNum[piece]]
 }
 
 func (pos *BoardStruct) ParseFen(fen string) {
@@ -334,98 +564,4 @@ func (pos *BoardStruct) String() string {
 	boardStr += fmt.Sprintf("PosKey:%d\n", pos.Hash)
 
 	return boardStr
-}
-
-func InitEvalMasks() {
-
-	sq := NoSq
-
-	for sq = 0; sq < 8; sq++ {
-		FileBBMask[sq] = 0
-		RankBBMask[sq] = 0
-	}
-
-	for r := R8; r >= R1; r-- {
-		for f := FA; f <= FH; f++ {
-			sq = r*8 + f
-			FileBBMask[f] |= (1 << sq)
-			RankBBMask[r] |= (1 << sq)
-		}
-	}
-
-	for r := R8; r >= R1; r-- {
-		for f := FA; f <= FH; f++ {
-			sq = r*8 + f
-			FileBBMask[f] |= (1 << sq)
-			RankBBMask[r] |= (1 << sq)
-		}
-	}
-
-	for sq := 0; sq < 64; sq++ {
-		IsolatedMask[sq] = 0
-		WhitePassedMask[sq] = 0
-		BlackPassedMask[sq] = 0
-	}
-
-	for sq := 0; sq < 64; sq++ {
-		tsq := sq + 8
-
-		for tsq < 64 {
-			WhitePassedMask[sq] |= (1 << tsq)
-			tsq += 8
-		}
-
-		tsq = sq - 8
-		for tsq >= 0 {
-			BlackPassedMask[sq] |= (1 << tsq)
-			tsq -= 8
-		}
-
-		if FileOf(sq) > FA {
-			IsolatedMask[sq] |= FileBBMask[FileOf(sq)-1]
-
-			tsq = sq + 7
-			for tsq < 64 {
-				WhitePassedMask[sq] |= (1 << tsq)
-				tsq += 8
-			}
-
-			tsq = sq - 9
-			for tsq >= 0 {
-				BlackPassedMask[sq] |= (1 << tsq)
-				tsq -= 8
-			}
-		}
-
-		if FileOf(sq) < FH {
-			IsolatedMask[sq] |= FileBBMask[FileOf(sq)+1]
-
-			tsq = sq + 9
-			for tsq < 64 {
-				WhitePassedMask[sq] |= (1 << tsq)
-				tsq += 8
-			}
-
-			tsq = sq - 7
-			for tsq >= 0 {
-				BlackPassedMask[sq] |= (1 << tsq)
-				tsq -= 8
-			}
-		}
-	}
-}
-
-func InitBitMasks() {
-	for i := 0; i < 64; i++ {
-		SetMask[i] = 0
-		ClearMask[i] = 0
-	}
-
-	for i := 0; i < 64; i++ {
-		SetMask[i] = (1 << i)
-	}
-
-	for i, value := range SetMask {
-		ClearMask[i] = ^value
-	}
 }

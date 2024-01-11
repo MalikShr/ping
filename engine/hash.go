@@ -2,6 +2,26 @@ package engine
 
 import "math/rand"
 
+var PieceKeys [13][64]uint64
+var SideKey uint64
+var CastleKeys [16]uint64
+
+func (pos *BoardStruct) HASHPIECE(piece uint8, sq int) {
+	pos.Hash ^= PieceKeys[piece][sq]
+}
+
+func (pos *BoardStruct) HASHCASTLE() {
+	pos.Hash ^= CastleKeys[pos.CastlePerm]
+}
+
+func (pos *BoardStruct) HASHSIDE() {
+	pos.Hash ^= SideKey
+}
+
+func (pos *BoardStruct) HASHEP() {
+	pos.Hash ^= PieceKeys[Empty][pos.EnPas]
+}
+
 func Rand64() uint64 {
 	return (uint64(rand.Int()) |
 		uint64(rand.Int())<<15 |
