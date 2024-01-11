@@ -25,38 +25,6 @@ func InitAttacks() {
 	}
 }
 
-func GenKnightAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
-	attacks := KnightAttacks[square] & ^ownPieces
-
-	for attacks != 0 {
-		sq := attacks.PopBit()
-
-		if block&(1<<sq) != 0 {
-			list.AddCaptureMove(pos, MOVE(square, sq, pos.Pieces[sq], Empty, 0))
-			continue
-		}
-		if quiet {
-			list.AddQuietMove(pos, MOVE(square, sq, Empty, Empty, 0))
-		}
-	}
-}
-
-func GenKingAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
-	attacks := KingAttacks[square] & ^ownPieces
-
-	for attacks != 0 {
-		sq := attacks.PopBit()
-
-		if block&(1<<sq) != 0 {
-			list.AddCaptureMove(pos, MOVE(square, sq, pos.Pieces[sq], Empty, 0))
-			continue
-		}
-		if quiet {
-			list.AddQuietMove(pos, MOVE(square, sq, Empty, Empty, 0))
-		}
-	}
-}
-
 func MaskPawnAttacks(side uint8, sq int) Bitboard {
 	// result attacks bitboard
 	attacks := Bitboard(0)
@@ -65,10 +33,10 @@ func MaskPawnAttacks(side uint8, sq int) Bitboard {
 	bitboard := Bitboard(0)
 
 	// set piece on board
-	bitboard.SETBIT(sq)
+	bitboard.SetBit(sq)
 
 	// white pawns
-	if side == White {
+	if side == Black {
 		// generate pawn attacks
 		if (bitboard>>7)&notAFile != 0 {
 			attacks |= (bitboard >> 7)
@@ -76,7 +44,7 @@ func MaskPawnAttacks(side uint8, sq int) Bitboard {
 		if (bitboard>>9)&notHFile != 0 {
 			attacks |= (bitboard >> 9)
 		}
-	} else if side == Black {
+	} else if side == White {
 		// generate pawn attacks
 		if (bitboard<<7)&notHFile != 0 {
 			attacks |= (bitboard << 7)
@@ -94,7 +62,7 @@ func MaskKnightAttacks(sq int) Bitboard {
 	attacks := Bitboard(0)
 	bitboard := Bitboard(0)
 
-	bitboard.SETBIT(sq)
+	bitboard.SetBit(sq)
 
 	// Generate Knight Attacks 17, 16, 10, 6
 	if (bitboard>>17)&notHFile != 0 {
@@ -140,7 +108,7 @@ func MaskKingAttacks(sq int) Bitboard {
 	bitboard := Bitboard(0)
 
 	// set piece on board
-	bitboard.SETBIT(sq)
+	bitboard.SetBit(sq)
 
 	// generate king attacks
 	if bitboard>>8 != 0 {
@@ -175,25 +143,34 @@ func MaskKingAttacks(sq int) Bitboard {
 	return attacks
 }
 
-func GenPawnAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, side uint8, quiet bool) {
-	attacks := PawnAttacks[side][square] & ^ownPieces
+func GenKnightAttacks(sq int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := KnightAttacks[sq] & ^ownPieces
 
-	direction := 1
+	for attacks != 0 {
+		targetSq := attacks.PopBit()
 
-	if side == Black {
-		direction = -1
+		if block&(1<<targetSq) != 0 {
+			list.AddCaptureMove(pos, MOVE(sq, targetSq, pos.Pieces[targetSq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(sq, targetSq, Empty, Empty, 0))
+		}
 	}
+}
+
+func GenKingAttacks(square int, ownPieces Bitboard, block Bitboard, pos *BoardStruct, list *MoveList, quiet bool) {
+	attacks := KingAttacks[square] & ^ownPieces
 
 	for attacks != 0 {
 		sq := attacks.PopBit()
 
-		if sq == square+(7*direction) || sq == square+(9*direction) {
-			if block&(1<<(sq)) != 0 {
-				list.AddPawnCapMove(pos, sq, square, pos.Pieces[square], side)
-			} else if pos.EnPas == square+(7*direction) || pos.EnPas == square+(9*direction) {
-				move := MOVE(sq, square, Empty, Empty, MFLAGEP)
-				list.AddEnPassantMove(pos, move)
-			}
+		if block&(1<<sq) != 0 {
+			list.AddCaptureMove(pos, MOVE(square, sq, pos.Pieces[sq], Empty, 0))
+			continue
+		}
+		if quiet {
+			list.AddQuietMove(pos, MOVE(square, sq, Empty, Empty, 0))
 		}
 	}
 }

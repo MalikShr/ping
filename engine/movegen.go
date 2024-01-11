@@ -16,7 +16,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quiet bool) {
 				}
 			}
 
-			GenPawnAttacks(sq, pos.Sides[pos.SideToMove], pos.Sides[pos.SideToMove^1], pos, list, pos.SideToMove, false)
+			GenerateAllPawnCaptureMoves(sq, pos, list, White)
 		}
 
 		if quiet {
@@ -49,7 +49,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quiet bool) {
 				}
 			}
 
-			GenPawnAttacks(sq, pos.Sides[pos.SideToMove], pos.Sides[pos.SideToMove^1], pos, list, pos.SideToMove, false)
+			GenerateAllPawnCaptureMoves(sq, pos, list, Black)
 		}
 
 		if quiet {
@@ -70,7 +70,7 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quiet bool) {
 		}
 	}
 
-	var pieceIndex uint8 = 0
+	pieceIndex := 0
 
 	for pieceIndex < 10 {
 		piece := NonPawnPieces[pieceIndex]
@@ -97,4 +97,31 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, quiet bool) {
 		pieceIndex++
 	}
 
+}
+
+func GenerateAllPawnCaptureMoves(sq int, pos *BoardStruct, list *MoveList, side uint8) {
+	direction := 1
+
+	if side == Black {
+		direction = -1
+	}
+
+	if !SQOFFBOARD(sq+(7*direction)) && PieceCol[pos.Pieces[sq+(7*direction)]] == pos.SideToMove^1 && ValidPawnDelta1(sq, direction) {
+		list.AddPawnCapMove(pos, sq, sq+(7*direction), pos.Pieces[sq+(7*direction)], side)
+	}
+
+	if !SQOFFBOARD(sq+(9*direction)) && PieceCol[pos.Pieces[sq+(9*direction)]] == pos.SideToMove^1 && ValidPawnDelta2(sq, direction) {
+		list.AddPawnCapMove(pos, sq, sq+(9*direction), pos.Pieces[sq+(9*direction)], side)
+	}
+
+	if pos.EnPas != NoSq {
+		if sq+(7*direction) == pos.EnPas && ValidPawnDelta1(sq, direction) {
+			move := MOVE(sq, sq+(7*direction), Empty, Empty, MFLAGEP)
+			list.AddEnPassantMove(pos, move)
+		}
+		if sq+(9*direction) == pos.EnPas && ValidPawnDelta2(sq, direction) {
+			move := MOVE(sq, sq+(9*direction), Empty, Empty, MFLAGEP)
+			list.AddEnPassantMove(pos, move)
+		}
+	}
 }

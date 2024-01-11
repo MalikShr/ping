@@ -204,15 +204,15 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 				pos.KingSq[Black] = sq
 			}
 
-			pos.Sides[color].SETBIT(sq)
+			pos.Sides[color].SetBit(sq)
 
 			if piece == wPawn {
-				pos.Pawns[White].SETBIT(sq)
-				pos.Pawns[Both].SETBIT(sq)
+				pos.Pawns[White].SetBit(sq)
+				pos.Pawns[Both].SetBit(sq)
 			}
 			if piece == bPawn {
-				pos.Pawns[Black].SETBIT(sq)
-				pos.Pawns[Both].SETBIT(sq)
+				pos.Pawns[Black].SetBit(sq)
+				pos.Pawns[Both].SetBit(sq)
 			}
 		}
 	}

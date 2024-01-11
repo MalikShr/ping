@@ -26,15 +26,16 @@ func (b Bitboard) CountBits() int {
 	return r
 }
 
-func (bb *Bitboard) CLEARBIT(sq int) {
+func (bb *Bitboard) ClearBit(sq int) {
 	*bb &= ClearMask[sq]
 }
 
-func (bb *Bitboard) SETBIT(sq int) {
+func (bb *Bitboard) SetBit(sq int) {
 	*bb |= SetMask[sq]
 }
 
-func (bb Bitboard) String() {
+func (bb Bitboard) String() string {
+	bbString := ""
 	var shiftMe Bitboard = 1
 
 	var f, sq int
@@ -46,13 +47,15 @@ func (bb Bitboard) String() {
 			sq = FR2SQ(f, rank)
 
 			if (shiftMe<<uint(sq))&bb != 0 {
-				fmt.Print("X")
+				bbString += "X"
 			} else {
-				fmt.Print("-")
+				bbString += "-"
 			}
 		}
-		fmt.Println()
+		bbString += "\n"
 	}
 
-	fmt.Printf("\n\n")
+	bbString += "\n"
+
+	return bbString
 }

@@ -91,13 +91,13 @@ func (pos *BoardStruct) ClearPiece(sq int) {
 
 	pos.HASHPIECE(piece, sq)
 
-	pos.Sides[col].CLEARBIT(sq)
+	pos.Sides[col].ClearBit(sq)
 	pos.Pieces[sq] = Empty
 	pos.Material[col] -= PieceVal[piece]
 
 	if !PieceBig[piece] {
-		pos.Pawns[col].CLEARBIT(sq)
-		pos.Pawns[Both].CLEARBIT(sq)
+		pos.Pawns[col].ClearBit(sq)
+		pos.Pawns[Both].ClearBit(sq)
 	}
 
 	for i := 0; i < pos.PieceNum[piece]; i++ {
@@ -178,11 +178,11 @@ func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
 	pos.HASHPIECE(piece, sq)
 
 	pos.Pieces[sq] = piece
-	pos.Sides[col].SETBIT(sq)
+	pos.Sides[col].SetBit(sq)
 
 	if !PieceBig[piece] {
-		pos.Pawns[col].SETBIT(sq)
-		pos.Pawns[Both].SETBIT(sq)
+		pos.Pawns[col].SetBit(sq)
+		pos.Pawns[Both].SetBit(sq)
 	}
 
 	pos.Material[col] += PieceVal[piece]
@@ -195,19 +195,19 @@ func (pos *BoardStruct) MovePiece(from int, to int) {
 	piece := pos.Pieces[from]
 	col := PieceCol[piece]
 
-	pos.Sides[col].CLEARBIT(from)
+	pos.Sides[col].ClearBit(from)
 	pos.HASHPIECE(piece, from)
 	pos.Pieces[from] = Empty
 
-	pos.Sides[col].SETBIT(to)
+	pos.Sides[col].SetBit(to)
 	pos.HASHPIECE(piece, to)
 	pos.Pieces[to] = piece
 
 	if !PieceBig[piece] {
-		pos.Pawns[col].CLEARBIT(from)
-		pos.Pawns[Both].CLEARBIT(from)
-		pos.Pawns[col].SETBIT(to)
-		pos.Pawns[Both].SETBIT(to)
+		pos.Pawns[col].ClearBit(from)
+		pos.Pawns[Both].ClearBit(from)
+		pos.Pawns[col].SetBit(to)
+		pos.Pawns[Both].SetBit(to)
 	}
 
 	for index := 0; index < pos.PieceNum[piece]; index++ {
