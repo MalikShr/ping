@@ -123,6 +123,7 @@ func (pos *BoardStruct) ResetBoard() {
 	for i := 0; i < 2; i++ {
 		pos.Material[i] = 0
 		pos.Pawns[i] = 0
+		pos.KingSq[i] = NoSq
 	}
 
 	for i := 0; i < 13; i++ {
@@ -137,9 +138,6 @@ func (pos *BoardStruct) ResetBoard() {
 	for i := 0; i < 13; i++ {
 		pos.PieceNum[i] = 0
 	}
-
-	pos.KingSq[White] = NoSq
-	pos.KingSq[Black] = NoSq
 
 	pos.SideToMove = Both
 	pos.EnPas = NoSq

@@ -17,6 +17,11 @@ var ClearMask [64]Bitboard
 var FileBBMask [8]Bitboard
 var RankBBMask [8]Bitboard
 
+var ClearFile [8]Bitboard
+var ClearRank [8]Bitboard
+
+const FullBB Bitboard = 0xffffffffffffffff
+
 func InitBitMasks() {
 	for i := 0; i < 64; i++ {
 		SetMask[i] = 0

@@ -66,13 +66,13 @@ func InitTables() {
 		rookOccupancyIndicies := (1 << rookRelevantBitsCount)
 
 		for i := 0; i < bishopOccupancyIndicies; i++ {
-			occupancy := SetOccupancies(i, bishopRelevantBitCount, bishopAttackMask)
+			occupancy := setOccupancies(i, bishopRelevantBitCount, bishopAttackMask)
 			magicIndex := (occupancy * MagicB[sq]) >> (64 - RelevantBishopBits[sq])
 			BishopAttacks[sq][magicIndex] = GenBishopAttacksFly(sq, occupancy)
 		}
 
 		for i := 0; i < rookOccupancyIndicies; i++ {
-			occupancy := SetOccupancies(i, rookRelevantBitsCount, rookAttackMask)
+			occupancy := setOccupancies(i, rookRelevantBitsCount, rookAttackMask)
 
 			magicIndex := (occupancy * MagicR[sq]) >> (64 - RelevantRookBits[sq])
 			RookAttacks[sq][magicIndex] = GenRookAttacksFly(sq, occupancy)
@@ -80,7 +80,7 @@ func InitTables() {
 	}
 }
 
-func SetOccupancies(index int, bitsInMask int, attackMask Bitboard) Bitboard {
+func setOccupancies(index int, bitsInMask int, attackMask Bitboard) Bitboard {
 	// occupancy map
 	occupancy := Bitboard(0)
 
@@ -347,22 +347,6 @@ func GenRookAttacksFly(sq int, block Bitboard) Bitboard {
 	}
 
 	return attacks
-}
-
-func GetBishopAttacks(sq int, occupancy Bitboard) Bitboard {
-	occupancy &= BishopMasks[sq]
-	occupancy *= MagicB[sq]
-	occupancy >>= 64 - RelevantBishopBits[sq]
-
-	return BishopAttacks[sq][occupancy]
-}
-
-func GetRookAttacks(sq int, occupancy Bitboard) Bitboard {
-	occupancy &= RookMasks[sq]
-	occupancy *= MagicR[sq]
-	occupancy >>= 64 - RelevantRookBits[sq]
-
-	return RookAttacks[sq][occupancy]
 }
 
 // rook magic numbers

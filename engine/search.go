@@ -50,12 +50,6 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 	return count
 }
 
-func checkUp(info *Search) {
-	if info.Timeset && time.Now().UnixMilli() > int64(info.Stoptime) {
-		info.Stopped = true
-	}
-}
-
 func PickNextMove(moveNum int, list *MoveList) {
 	var tempMove Move
 	bestScore := 0
@@ -73,38 +67,6 @@ func PickNextMove(moveNum int, list *MoveList) {
 	list.Moves[bestNum] = tempMove
 }
 
-func IsRepetition(pos *BoardStruct) bool {
-	for i := pos.HistoryPly - pos.Rule50; i < pos.HistoryPly-1; i++ {
-		if pos.Hash == pos.History[i].Hash {
-			return true
-		}
-	}
-
-	return false
-}
-
-func ClearForSearch(pos *BoardStruct, info *Search) {
-	for index := 0; index < 13; index++ {
-		for index2 := 0; index2 < 64; index2++ {
-			pos.SearchHistory[index][index2] = 0
-		}
-	}
-
-	for index := 0; index < 2; index++ {
-		for index2 := 0; index2 < MaxDepth; index2++ {
-			pos.SearchKillers[index][index2] = 0
-		}
-	}
-
-	info.TT = make(map[uint64]int)
-	pos.Ply = 0
-
-	info.Stopped = false
-	info.Nodes = 0
-	info.Fh = 0
-	info.Fhf = 0
-}
-
 func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 	if (info.Nodes & 2047) == 0 {
 		checkUp(info)
@@ -112,7 +74,7 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 
 	info.Nodes++
 
-	if IsRepetition(pos) || pos.Rule50 >= 100 {
+	if isRepetition(pos) || pos.Rule50 >= 100 {
 		return 0
 	}
 
@@ -186,7 +148,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 
 	info.Nodes++
 
-	if (IsRepetition(pos) || pos.Rule50 >= 100) && pos.Ply != 0 {
+	if (isRepetition(pos) || pos.Rule50 >= 100) && pos.Ply != 0 {
 		return 0
 	}
 
@@ -272,7 +234,7 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 	bestScore := -INFINITE
 	pvMoves := 0
 
-	ClearForSearch(pos, info)
+	clearForSearch(pos, info)
 
 	for currentDepth := 1; currentDepth <= info.Depth; currentDepth++ {
 		bestScore = AlphaBeta(-INFINITE, INFINITE, currentDepth, pos, info)
@@ -295,4 +257,42 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 	}
 
 	fmt.Printf("bestmove %s\n", PrMove(bestMove))
+}
+
+func clearForSearch(pos *BoardStruct, info *Search) {
+	for index := 0; index < 13; index++ {
+		for index2 := 0; index2 < 64; index2++ {
+			pos.SearchHistory[index][index2] = 0
+		}
+	}
+
+	for index := 0; index < 2; index++ {
+		for index2 := 0; index2 < MaxDepth; index2++ {
+			pos.SearchKillers[index][index2] = 0
+		}
+	}
+
+	info.TT = make(map[uint64]int)
+	pos.Ply = 0
+
+	info.Stopped = false
+	info.Nodes = 0
+	info.Fh = 0
+	info.Fhf = 0
+}
+
+func isRepetition(pos *BoardStruct) bool {
+	for i := pos.HistoryPly - pos.Rule50; i < pos.HistoryPly-1; i++ {
+		if pos.Hash == pos.History[i].Hash {
+			return true
+		}
+	}
+
+	return false
+}
+
+func checkUp(info *Search) {
+	if info.Timeset && time.Now().UnixMilli() > int64(info.Stoptime) {
+		info.Stopped = true
+	}
 }
