@@ -194,7 +194,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 		return EvalPosition(pos)
 	}
 
-	inCheck := pos.SqAttacked(pos.KingSq[pos.SideToMove], pos.SideToMove^1)
+	inCheck := SqAttacked(pos.KingSq[pos.SideToMove], pos, pos.SideToMove^1)
 
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)

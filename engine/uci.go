@@ -71,6 +71,12 @@ func Uci() {
 
 	inter.handleUci()
 
+	//
+	pos.ParseFen("8/8/8/2pP4/8/8/8/8 w - c6 0 1")
+	var list MoveList
+	GenPawnMoves(D5, &pos, &list, true)
+	//
+
 	var err error
 	inter.OpeningBook, err = LoadPolyglotFile("../book/baron30.bin")
 

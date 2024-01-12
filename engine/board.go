@@ -277,7 +277,7 @@ func (pos *BoardStruct) DoMove(move int) bool {
 	pos.SideToMove ^= 1
 	pos.HASHSIDE()
 
-	if pos.SqAttacked(pos.KingSq[side], pos.SideToMove) {
+	if SqAttacked(pos.KingSq[side], pos, pos.SideToMove) {
 		pos.UndoMove()
 
 		return false

@@ -1,6 +1,8 @@
 package engine
 
-import "math"
+import (
+	"math"
+)
 
 var CastlePerm = [64]int{
 	13, 15, 15, 15, 12, 15, 15, 14,
@@ -28,64 +30,33 @@ func ValidPawnDelta2(sq int, direction int) bool {
 func GenerateAllMoves(pos *BoardStruct, list *MoveList, genQuiet bool) {
 	list.Count = 0
 
-	if pos.SideToMove == White {
-		for pieceNum := 0; pieceNum < pos.PieceNum[wPawn]; pieceNum++ {
-			sq := pos.PieceList[wPawn][pieceNum]
-
-			if pos.Squares[sq+8] == Empty && genQuiet {
-				list.AddPawnMove(pos, sq, sq+8, White)
-
-				if RankOf(sq) == R2 && pos.Squares[sq+16] == Empty {
-					move := MOVE(sq, (sq + 16), Empty, Empty, MFLAGPS)
-					list.AddQuietMove(pos, move)
-				}
-			}
-
-			GenerateAllPawnCaptureMoves(sq, pos, list, White)
-		}
-
-		if genQuiet {
+	if genQuiet {
+		if pos.SideToMove == White {
 			// castling
 			if pos.CastlePerm&wKCastle != 0 && pos.CastlePerm&wQCastle != 0 {
 				if pos.Squares[F1] == Empty && pos.Squares[G1] == Empty {
-					if !pos.SqAttacked(E1, Black) && !pos.SqAttacked(F1, Black) {
+					if !SqAttacked(E1, pos, Black) && !SqAttacked(F1, pos, Black) {
 						list.AddQuietMove(pos, MOVE(E1, G1, Empty, Empty, MFLAGCA))
 					}
 				}
 
 				if pos.Squares[D1] == Empty && pos.Squares[C1] == Empty && pos.Squares[B1] == Empty {
-					if !pos.SqAttacked(E1, Black) && !pos.SqAttacked(D1, Black) {
+					if !SqAttacked(E1, pos, Black) && !SqAttacked(D1, pos, Black) {
 						list.AddQuietMove(pos, MOVE(E1, C1, Empty, Empty, MFLAGCA))
 					}
 				}
 			}
-
-		}
-	} else {
-		for pieceNum := 0; pieceNum < pos.PieceNum[bPawn]; pieceNum++ {
-			sq := pos.PieceList[bPawn][pieceNum]
-
-			if pos.Squares[sq-8] == Empty && genQuiet {
-				list.AddPawnMove(pos, sq, sq-8, Black)
-				if RankOf(sq) == R7 && pos.Squares[sq-16] == Empty {
-					list.AddQuietMove(pos, MOVE(sq, (sq-16), Empty, Empty, MFLAGPS))
-				}
-			}
-
-			GenerateAllPawnCaptureMoves(sq, pos, list, Black)
-		}
-
-		if genQuiet {
+		} else {
 			// castling
 			if pos.CastlePerm&bKCastle != 0 && pos.CastlePerm&bQCastle != 0 {
 				if pos.Squares[F8] == Empty && pos.Squares[G8] == Empty {
-					if !pos.SqAttacked(E8, White) && !pos.SqAttacked(F8, White) {
+					if !SqAttacked(E8, pos, White) && !SqAttacked(F8, pos, White) {
 						list.AddQuietMove(pos, MOVE(E8, G8, Empty, Empty, MFLAGCA))
 					}
 				}
 
 				if pos.Squares[D8] == Empty && pos.Squares[C8] == Empty && pos.Squares[B8] == Empty {
-					if !pos.SqAttacked(E8, White) && !pos.SqAttacked(D8, White) {
+					if !SqAttacked(E8, pos, White) && !SqAttacked(D8, pos, White) {
 						list.AddQuietMove(pos, MOVE(E8, C8, Empty, Empty, MFLAGCA))
 					}
 				}
@@ -93,31 +64,74 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, genQuiet bool) {
 		}
 	}
 
-	pieceIndex := 0
+	// Copy bitboard of all pieces and loop over them
+	allPieces := pos.Sides[pos.SideToMove]
 
-	for pieceIndex < 10 {
-		piece := NonPawnPieces[pieceIndex]
+	for allPieces != 0 {
+		sq := allPieces.PopBit()
+		piece := pos.Squares[sq]
 
-		for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-			sq := pos.PieceList[piece][pieceNum]
+		if PiecePawn[piece] {
+			GenPawnMoves(sq, pos, list, genQuiet)
+		}
 
-			if IsKn(piece) && PieceCol[piece] == pos.SideToMove {
-				GenKnightAttacks(sq, pos, list, genQuiet)
-			}
+		if IsKn(piece) {
+			GenKnightAttacks(sq, pos, list, genQuiet)
+		}
 
-			if IsBQ(piece) && PieceCol[piece] == pos.SideToMove {
-				GenBishopAttacks(sq, pos, list, genQuiet)
-			}
+		if IsBQ(piece) {
+			GenBishopAttacks(sq, pos, list, genQuiet)
+		}
 
-			if IsRQ(piece) && PieceCol[piece] == pos.SideToMove {
-				GenRookAttacks(sq, pos, list, genQuiet)
-			}
+		if IsRQ(piece) {
+			GenRookAttacks(sq, pos, list, genQuiet)
+		}
 
-			if IsKi(piece) && PieceCol[piece] == pos.SideToMove {
-				GenKingAttacks(sq, pos, list, genQuiet)
+		if IsKi(piece) {
+			GenKingAttacks(sq, pos, list, genQuiet)
+		}
+	}
+}
+
+func GenPawnMoves(sq int, pos *BoardStruct, list *MoveList, genQuiet bool) {
+	attacks := PawnAttacks[pos.SideToMove^1][sq] & pos.Sides[pos.SideToMove^1]
+	for attacks != 0 {
+		targetSq := attacks.PopBit()
+
+		list.AddPawnCapMove(pos, sq, targetSq, pos.Squares[targetSq], pos.SideToMove)
+	}
+
+	if pos.EnPas != NoSq {
+		enPasAttacks := PawnAttacks[pos.SideToMove^1][sq] & (1 << pos.EnPas)
+
+		if enPasAttacks != 0 {
+			targetSq := enPasAttacks.PopBit()
+
+			move := MOVE(sq, targetSq, Empty, Empty, MFLAGEP)
+			list.AddEnPassantMove(pos, move)
+		}
+	}
+
+	if genQuiet {
+		dir := 1
+		fistPawnRank := R2
+
+		if pos.SideToMove == Black {
+			dir = -1
+			fistPawnRank = R7
+		}
+
+		onePawnPush := sq + (8 * dir)
+		twoPawnPush := sq + (16 * dir)
+
+		if !SQOFFBOARD(onePawnPush) && pos.Sides[Both]&(1<<onePawnPush) == 0 {
+			list.AddPawnMove(pos, sq, onePawnPush, pos.SideToMove)
+
+			if RankOf(sq) == fistPawnRank && pos.Sides[Both]&(1<<twoPawnPush) == 0 {
+				move := MOVE(sq, twoPawnPush, Empty, Empty, MFLAGPS)
+				list.AddQuietMove(pos, move)
 			}
 		}
-		pieceIndex++
 	}
 
 }
@@ -213,7 +227,7 @@ func GenKingAttacks(square int, pos *BoardStruct, list *MoveList, genQuiet bool)
 	}
 }
 
-func (pos *BoardStruct) SqAttacked(targetSq int, side uint8) bool {
+func SqAttacked(targetSq int, pos *BoardStruct, side uint8) bool {
 	if side == White {
 		if PawnAttacks[side][targetSq]&pos.Pieces[wPawn] != 0 {
 			return true
