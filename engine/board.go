@@ -51,30 +51,6 @@ const (
 	maxPositionMoves = 256
 )
 
-const (
-	FA int = iota
-	FB
-	FC
-	FD
-	FE
-	FF
-	FG
-	FH
-	FNone
-)
-
-const (
-	R1 int = iota
-	R2
-	R3
-	R4
-	R5
-	R6
-	R7
-	R8
-	RNone
-)
-
 type BoardStruct struct {
 	Hash uint64
 
@@ -190,7 +166,7 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 }
 
 func (pos *BoardStruct) DoMove(move int) bool {
-	from := FROMSQ(move)
+	from := FromSq(move)
 	to := ToSq(move)
 
 	side := pos.SideToMove
@@ -289,7 +265,7 @@ func (pos *BoardStruct) UndoMove() {
 	pos.Ply--
 
 	move := pos.History[pos.HistoryPly].Move
-	from := FROMSQ(move)
+	from := FromSq(move)
 	to := ToSq(move)
 
 	if pos.EnPas != NoSq {

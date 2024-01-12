@@ -7,9 +7,11 @@ import (
 func Init() {
 	engine.InitBitMasks()
 	engine.InitHashKeys()
+	engine.InitTables()
 	engine.InitEvalMasks()
 	engine.InitMvvLva()
-	engine.InitTables()
+	engine.InitMagic()
+
 }
 
 func main() {

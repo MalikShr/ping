@@ -78,36 +78,8 @@ func IsKi(p uint8) bool {
 	return PieceKing[p]
 }
 
-func FROMSQ(m int) int {
+func FromSq(m int) int {
 	return m & 0x7F
-}
-
-func PrMove(move int) string {
-
-	var MvStr string
-
-	ff := FileOf(FROMSQ(move))
-	rf := RankOf(FROMSQ(move))
-	ft := FileOf(ToSq(move))
-	rt := RankOf(ToSq(move))
-
-	promoted := Promoted(move)
-
-	if promoted != 0 {
-		pchar := 'q'
-		if IsKn(promoted) {
-			pchar = 'n'
-		} else if IsRQ(promoted) && !IsBQ(promoted) {
-			pchar = 'r'
-		} else if !IsRQ(promoted) && IsBQ(promoted) {
-			pchar = 'b'
-		}
-		MvStr = fmt.Sprintf("%c%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt), pchar)
-	} else {
-		MvStr = fmt.Sprintf("%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt))
-	}
-
-	return MvStr
 }
 
 func PrSq(sq int) string {
@@ -145,7 +117,7 @@ func ParseMove(ptrChar string, pos *BoardStruct) int {
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
 		move := list.Moves[moveNum].Move
-		if FROMSQ(move) == from && ToSq(move) == to {
+		if FromSq(move) == from && ToSq(move) == to {
 			promPiece = Promoted(move)
 			if promPiece != Empty {
 				if IsRQ(promPiece) && !IsBQ(promPiece) && ptrChar[4] == 'r' {

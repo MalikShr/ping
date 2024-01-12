@@ -1,22 +1,5 @@
 package engine
 
-// not A file constant
-var notAFile Bitboard = 18374403900871474942
-
-// not H file constant
-var notHFile Bitboard = 9187201950435737471
-
-// not HG file constant
-var notHGFile Bitboard = 4557430888798830399
-
-// not AB file constant
-var notABFile Bitboard = 18229723555195321596
-
-var KnightAttacks [64]Bitboard
-var KingAttacks [64]Bitboard
-var PawnAttacks [2][64]Bitboard
-var BishopRelevantBits [64]Bitboard
-
 var BishopMasks [64]Bitboard
 var RookMasks [64]Bitboard
 
@@ -47,15 +30,11 @@ var RelevantRookBits = [64]int{
 	12, 11, 11, 11, 11, 11, 11, 12,
 }
 
-func InitTables() {
+func InitMagic() {
 	for sq := 0; sq < 64; sq++ {
 		bishopAttackMask := GenBishopAttacks(sq, 0, true)
 		rookAttackMask := GenRookAttacks(sq, 0, true)
 
-		PawnAttacks[White][sq] = InitPawnAttacks(White, sq)
-		PawnAttacks[Black][sq] = InitPawnAttacks(Black, sq)
-		KnightAttacks[sq] = InitKnightAttacks(sq)
-		KingAttacks[sq] = InitKingAttacks(sq)
 		BishopMasks[sq] = bishopAttackMask
 		RookMasks[sq] = rookAttackMask
 
@@ -96,124 +75,6 @@ func setOccupancies(index int, bitsInMask int, attackMask Bitboard) Bitboard {
 	}
 
 	return occupancy
-}
-
-func InitPawnAttacks(side uint8, sq int) Bitboard {
-	// result attacks bitboard
-	attacks := Bitboard(0)
-
-	// piece bitboard
-	bitboard := Bitboard(0)
-
-	// set piece on board
-	bitboard.SetBit(sq)
-
-	// white pawns
-	if side == White {
-		// generate pawn attacks
-		if (bitboard>>7)&notAFile != 0 {
-			attacks |= (bitboard >> 7)
-		}
-		if (bitboard>>9)&notHFile != 0 {
-			attacks |= (bitboard >> 9)
-		}
-	} else if side == Black {
-		// generate pawn attacks
-		if (bitboard<<7)&notHFile != 0 {
-			attacks |= (bitboard << 7)
-		}
-		if (bitboard<<9)&notAFile != 0 {
-			attacks |= (bitboard << 9)
-		}
-	}
-
-	// return attack map
-	return attacks
-}
-
-func InitKnightAttacks(sq int) Bitboard {
-	attacks := Bitboard(0)
-	bitboard := Bitboard(0)
-
-	bitboard.SetBit(sq)
-
-	// Generate Knight Attacks 17, 16, 10, 6
-	if (bitboard>>17)&notHFile != 0 {
-		attacks |= (bitboard >> 17)
-	}
-
-	if (bitboard>>15)&notAFile != 0 {
-		attacks |= (bitboard >> 15)
-	}
-
-	if (bitboard>>10)&notHGFile != 0 {
-		attacks |= (bitboard >> 10)
-	}
-
-	if (bitboard>>6)&notABFile != 0 {
-		attacks |= (bitboard >> 6)
-	}
-
-	if (bitboard<<17)&notAFile != 0 {
-		attacks |= (bitboard << 17)
-	}
-
-	if (bitboard<<15)&notHFile != 0 {
-		attacks |= (bitboard << 15)
-	}
-
-	if (bitboard<<10)&notABFile != 0 {
-		attacks |= (bitboard << 10)
-	}
-
-	if (bitboard<<6)&notHGFile != 0 {
-		attacks |= (bitboard << 6)
-	}
-
-	return attacks
-}
-
-func InitKingAttacks(sq int) Bitboard {
-	// result attacks bitboard
-	attacks := Bitboard(0)
-
-	// piece bitboard
-	bitboard := Bitboard(0)
-
-	// set piece on board
-	bitboard.SetBit(sq)
-
-	// generate king attacks
-	if bitboard>>8 != 0 {
-		attacks |= (bitboard >> 8)
-	}
-
-	if (bitboard>>9)&notHFile != 0 {
-		attacks |= (bitboard >> 9)
-	}
-
-	if (bitboard>>7)&notAFile != 0 {
-		attacks |= (bitboard >> 7)
-	}
-
-	if (bitboard>>1)&notHFile != 0 {
-		attacks |= (bitboard >> 1)
-	}
-	if bitboard<<8 != 0 {
-		attacks |= (bitboard << 8)
-	}
-	if (bitboard<<9)&notAFile != 0 {
-		attacks |= (bitboard << 9)
-	}
-	if (bitboard<<7)&notHFile != 0 {
-		attacks |= (bitboard << 7)
-	}
-	if (bitboard<<1)&notAFile != 0 {
-		attacks |= (bitboard << 1)
-	}
-
-	// return attack map
-	return attacks
 }
 
 func GenBishopAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
@@ -263,14 +124,14 @@ func GenBishopAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
 }
 
 func GenRookAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
-	verticalMoves := Bitboard(0)
 	horizontalMoves := Bitboard(0)
+	verticalMoves := Bitboard(0)
 
 	rank := RankOf(sq)
 	file := FileOf(sq)
 
 	for f := file + 1; f < 8; f++ {
-		verticalMoves |= 1 << (rank*8 + f)
+		horizontalMoves |= 1 << (rank*8 + f)
 
 		if block&(1<<(rank*8+f)) != 0 {
 			break
@@ -278,7 +139,7 @@ func GenRookAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
 	}
 
 	for f := file - 1; f >= 0; f-- {
-		verticalMoves |= 1 << (rank*8 + f)
+		horizontalMoves |= 1 << (rank*8 + f)
 
 		if block&(1<<(rank*8+f)) != 0 {
 			break
@@ -286,7 +147,7 @@ func GenRookAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
 	}
 
 	for r := rank + 1; r < 8; r++ {
-		horizontalMoves |= 1 << (r*8 + file)
+		verticalMoves |= 1 << (r*8 + file)
 
 		if block&(1<<(r*8+file)) != 0 {
 			break
@@ -294,7 +155,7 @@ func GenRookAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
 	}
 
 	for r := rank - 1; r >= 0; r-- {
-		horizontalMoves |= 1 << (r*8 + file)
+		verticalMoves |= 1 << (r*8 + file)
 
 		if block&(1<<(r*8+file)) != 0 {
 			break
@@ -302,11 +163,11 @@ func GenRookAttacks(sq int, block Bitboard, genQuiet bool) Bitboard {
 	}
 
 	if genQuiet {
-		verticalMoves &= ClearRank[R1] & ClearRank[R8]
 		horizontalMoves &= ClearFile[FA] & ClearFile[FH]
+		verticalMoves &= ClearRank[R1] & ClearRank[R8]
 	}
 
-	return horizontalMoves | verticalMoves
+	return verticalMoves | horizontalMoves
 }
 
 // rook magic numbers

@@ -87,23 +87,6 @@ var PieceVal = [13]int{0, 100, 320, 330, 500, 900, 20_000, 100, 320, 330, 500, 9
 
 func InitEvalMasks() {
 
-	for sq := 0; sq < 8; sq++ {
-		FileBBMask[sq] = 0
-		RankBBMask[sq] = 0
-		ClearFile[sq] = FullBB
-		ClearRank[sq] = FullBB
-	}
-
-	for r := R8; r >= R1; r-- {
-		for f := FA; f <= FH; f++ {
-			sq := FR2SQ(r, f)
-			FileBBMask[f] |= (1 << sq)
-			RankBBMask[r] |= (1 << sq)
-			ClearFile[f].ClearBit(sq)
-			ClearRank[r].ClearBit(sq)
-		}
-	}
-
 	for sq := 0; sq < 64; sq++ {
 		IsolatedMask[sq] = 0
 		WhitePassedMask[sq] = 0

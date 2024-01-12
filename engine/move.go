@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 type Move struct {
 	Move  int
 	Score int
@@ -26,4 +28,31 @@ func Promoted(m int) uint8 {
 
 func MOVE(from int, to int, capture uint8, promotion uint8, flag int) int {
 	return from | (to << 7) | (int(capture) << 14) | (int(promotion) << 20) | flag
+}
+
+func PrMove(move int) string {
+	var MvStr string
+
+	ff := FileOf(FromSq(move))
+	rf := RankOf(FromSq(move))
+	ft := FileOf(ToSq(move))
+	rt := RankOf(ToSq(move))
+
+	promoted := Promoted(move)
+
+	if promoted != 0 {
+		pchar := 'q'
+		if IsKn(promoted) {
+			pchar = 'n'
+		} else if IsRQ(promoted) && !IsBQ(promoted) {
+			pchar = 'r'
+		} else if !IsRQ(promoted) && IsBQ(promoted) {
+			pchar = 'b'
+		}
+		MvStr = fmt.Sprintf("%c%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt), pchar)
+	} else {
+		MvStr = fmt.Sprintf("%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt))
+	}
+
+	return MvStr
 }
