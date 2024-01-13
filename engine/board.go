@@ -77,7 +77,7 @@ type BoardStruct struct {
 
 	PieceList [13][10]int
 
-	SearchHistory [13][64]int
+	SearchHistory [13][64]uint16
 	SearchKillers [2][MaxDepth]int
 }
 

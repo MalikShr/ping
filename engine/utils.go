@@ -78,10 +78,6 @@ func IsKi(p uint8) bool {
 	return PieceKing[p]
 }
 
-func FromSq(m int) int {
-	return m & 0x7F
-}
-
 func PrSq(sq int) string {
 
 	var SqStr string

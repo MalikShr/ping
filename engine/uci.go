@@ -71,8 +71,6 @@ func Uci() {
 
 	inter.handleUci()
 
-	fmt.Println(Bitboard(ClearFile[FA] & ClearFile[FB]))
-
 	var err error
 	inter.OpeningBook, err = LoadPolyglotFile("../book/baron30.bin")
 

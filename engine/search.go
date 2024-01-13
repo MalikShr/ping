@@ -2,12 +2,25 @@ package engine
 
 import (
 	"fmt"
+	"math"
 	"time"
 )
 
 const (
 	MaxDepth = 64
 	INFINITE = 30000
+
+	// A constant representing the score of the principal variation
+	// move from the transposition table.
+	PVMoveScore uint16 = 120
+
+	// A constant representing the score offsets of the killer moves.
+	FirstKillerMoveScore  uint16 = 10
+	SecondKillerMoveScore uint16 = 20
+
+	// A constant to offset the score of the pv and MVV-LVA move higher
+	// than killers and history heuristic moves.
+	MvvLvaOffset uint16 = math.MaxUint16 - 256
 )
 
 type Search struct {
@@ -52,7 +65,7 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 
 func PickNextMove(moveNum int, list *MoveList) {
 	var tempMove Move
-	bestScore := 0
+	bestScore := uint16(0)
 	bestNum := moveNum
 
 	for i := moveNum; i < list.Count; i++ {
@@ -170,7 +183,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	if PvMove != NoMove {
 		for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
 			if list.Moves[MoveNum].Move == PvMove {
-				list.Moves[MoveNum].Score = 2_000_000
+				list.Moves[MoveNum].Score = MvvLvaOffset + PVMoveScore
 			}
 
 		}
@@ -209,7 +222,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 			BestMove = list.Moves[MoveNum].Move
 
 			if list.Moves[MoveNum].Move&MFLAGCAP != 0 {
-				pos.SearchHistory[pos.Squares[FromSq(BestMove)]][ToSq(BestMove)] += depth
+				pos.SearchHistory[pos.Squares[FromSq(BestMove)]][ToSq(BestMove)] += uint16(depth)
 			}
 		}
 	}

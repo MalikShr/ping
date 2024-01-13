@@ -7,8 +7,8 @@ type MoveList struct {
 	Count int
 }
 
-var VictimScore = [13]int{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
-var MvvLvaScores [13][13]int
+var VictimScore = [13]uint16{0, 10, 20, 30, 40, 50, 60, 10, 20, 30, 40, 50, 60}
+var MvvLvaScores [13][13]uint16
 
 func InitMvvLva() {
 	for Attacker := wPawn; Attacker <= bKing; Attacker++ {
@@ -22,9 +22,9 @@ func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
 	list.Moves[list.Count].Move = move
 
 	if pos.SearchKillers[0][pos.Ply] == move {
-		list.Moves[list.Count].Score = 900_000
+		list.Moves[list.Count].Score = MvvLvaOffset - FirstKillerMoveScore
 	} else if pos.SearchKillers[1][pos.Ply] == move {
-		list.Moves[list.Count].Score = 800_000
+		list.Moves[list.Count].Score = MvvLvaOffset - SecondKillerMoveScore
 	} else {
 
 		list.Moves[list.Count].Score = pos.SearchHistory[pos.Squares[FromSq(move)]][ToSq(move)]
@@ -35,13 +35,13 @@ func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
 
 func (list *MoveList) AddCaptureMove(pos *BoardStruct, move int) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = MvvLvaScores[Captured(move)][pos.Squares[FromSq(move)]] + 1_000_000
+	list.Moves[list.Count].Score = MvvLvaOffset + MvvLvaScores[Captured(move)][pos.Squares[FromSq(move)]]
 	list.Count++
 }
 
 func (list *MoveList) AddEnPassantMove(pos *BoardStruct, move int) {
 	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = 105 + 1_000_000
+	list.Moves[list.Count].Score = MvvLvaOffset + 15
 	list.Count++
 }
 
@@ -55,12 +55,12 @@ func (list *MoveList) AddPawnCapMove(pos *BoardStruct, from int, to int, cap uin
 	}
 
 	if RankOf(from) == beforePromRank {
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[0], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[1], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[2], 0))
-		list.AddCaptureMove(pos, MOVE(from, to, cap, possibleProms[3], 0))
+		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[0], 0))
+		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[1], 0))
+		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[2], 0))
+		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[3], 0))
 	} else {
-		list.AddCaptureMove(pos, MOVE(from, to, cap, Empty, 0))
+		list.AddCaptureMove(pos, NewMove(from, to, cap, Empty, 0))
 	}
 }
 
@@ -74,12 +74,12 @@ func (list *MoveList) AddPawnMove(pos *BoardStruct, from int, to int, side uint8
 	}
 
 	if RankOf(from) == beforePromRank {
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[0], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[1], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[2], 0))
-		list.AddQuietMove(pos, MOVE(from, to, Empty, possibleProms[3], 0))
+		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[0], 0))
+		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[1], 0))
+		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[2], 0))
+		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[3], 0))
 	} else {
-		list.AddQuietMove(pos, MOVE(from, to, Empty, Empty, 0))
+		list.AddQuietMove(pos, NewMove(from, to, Empty, Empty, 0))
 	}
 }
 
