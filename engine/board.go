@@ -279,19 +279,23 @@ func (pos *BoardStruct) UndoMove() {
 	pos.HistoryPly--
 	pos.Ply--
 
-	move := pos.History[pos.HistoryPly].Move
-	from := move.FromSq()
-	to := move.ToSq()
-
 	if pos.EnPas != NoSq {
 		pos.HASHEP()
 	}
 
 	pos.HASHCASTLE()
 
-	pos.CastlePerm = pos.History[pos.HistoryPly].CastlePerm
-	pos.Rule50 = pos.History[pos.HistoryPly].Rule50
-	pos.EnPas = pos.History[pos.HistoryPly].EnPas
+	prevState := pos.History[pos.HistoryPly]
+
+	pos.CastlePerm = prevState.CastlePerm
+	pos.Rule50 = prevState.Rule50
+	pos.EnPas = prevState.EnPas
+
+	move := prevState.Move
+	from := move.FromSq()
+	to := move.ToSq()
+
+	captured := pos.History[pos.HistoryPly].Captured
 
 	if pos.EnPas != NoSq {
 		pos.HASHEP()
@@ -326,7 +330,6 @@ func (pos *BoardStruct) UndoMove() {
 		pos.KingSq[pos.SideToMove] = from
 	}
 
-	captured := pos.History[pos.HistoryPly].Captured
 	if captured != Empty {
 		pos.AddPiece(to, captured)
 	}

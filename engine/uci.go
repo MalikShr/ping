@@ -78,7 +78,7 @@ func Uci() {
 	var pos BoardStruct
 	var info Search
 	inter := UCIInterface{}
-	TestGoCommand(inter)
+	//TestGoCommand(inter)
 	info.TT = make(map[uint64]Move)
 
 	inter.handleUci()

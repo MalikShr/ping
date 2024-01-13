@@ -95,56 +95,56 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 		return EvalPosition(pos)
 	}
 
-	Score := EvalPosition(pos)
+	score := EvalPosition(pos)
 
-	if Score >= beta {
+	if score >= beta {
 		return beta
 	}
 
-	if Score > alpha {
-		alpha = Score
+	if score > alpha {
+		alpha = score
 	}
 
 	var list MoveList
 	GenerateAllMoves(pos, &list, false)
 
-	Legal := 0
-	OldAlpha := alpha
-	BestMove := NoMove
-	Score = -INFINITE
+	legal := 0
+	oldAlpha := alpha
+	bestMove := NoMove
+	score = -INFINITE
 
-	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
+	for moveNum := 0; moveNum < list.Count; moveNum++ {
 
-		PickNextMove(MoveNum, &list)
+		PickNextMove(moveNum, &list)
 
-		if !pos.DoMove(list.Moves[MoveNum]) {
+		if !pos.DoMove(list.Moves[moveNum]) {
 			continue
 		}
 
-		Legal++
-		Score = -Quiescence(-beta, -alpha, pos, info)
+		legal++
+		score = -Quiescence(-beta, -alpha, pos, info)
 		pos.UndoMove()
 
 		if info.Stopped {
 			return 0
 		}
 
-		if Score > alpha {
-			if Score >= beta {
-				if Legal == 1 {
+		if score > alpha {
+			if score >= beta {
+				if legal == 1 {
 					info.Fhf++
 				}
 				info.Fh++
 
 				return beta
 			}
-			alpha = Score
-			BestMove = list.Moves[MoveNum]
+			alpha = score
+			bestMove = list.Moves[moveNum]
 		}
 	}
 
-	if alpha != OldAlpha {
-		info.TT[pos.Hash] = BestMove
+	if alpha != oldAlpha {
+		info.TT[pos.Hash] = bestMove
 	}
 
 	return alpha
@@ -174,60 +174,60 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)
 
-	Legal := 0
-	OldAlpha := alpha
-	BestMove := NoMove
-	Score := -INFINITE
-	PvMove := info.TT[pos.Hash]
+	legal := 0
+	oldAlpha := alpha
+	bestMove := NoMove
+	score := -INFINITE
+	pvMove := info.TT[pos.Hash]
 
-	if PvMove != NoMove {
-		for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
-			if list.Moves[MoveNum].Equals(PvMove) {
-				list.Moves[MoveNum].AddScore(MvvLvaOffset + PVMoveScore)
+	if pvMove != NoMove {
+		for moveNum := 0; moveNum < list.Count; moveNum++ {
+			if list.Moves[moveNum].Equals(pvMove) {
+				list.Moves[moveNum].AddScore(MvvLvaOffset + PVMoveScore)
 			}
 
 		}
 	}
 
-	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
-		PickNextMove(MoveNum, &list)
+	for moveNum := 0; moveNum < list.Count; moveNum++ {
+		PickNextMove(moveNum, &list)
 
-		if !pos.DoMove(list.Moves[MoveNum]) {
+		if !pos.DoMove(list.Moves[moveNum]) {
 			continue
 		}
 
-		Legal++
-		Score = -AlphaBeta(-beta, -alpha, depth-1, pos, info)
+		legal++
+		score = -AlphaBeta(-beta, -alpha, depth-1, pos, info)
 		pos.UndoMove()
 
 		if info.Stopped {
 			return 0
 		}
 
-		if Score > alpha {
-			if Score >= beta {
-				if Legal == 1 {
+		if score > alpha {
+			if score >= beta {
+				if legal == 1 {
 					info.Fhf++
 				}
 				info.Fh++
 
-				if list.Moves[MoveNum].MoveType() == Attack {
+				if list.Moves[moveNum].MoveType() == Attack {
 					pos.SearchKillers[1][pos.Ply] = pos.SearchKillers[0][pos.Ply]
-					pos.SearchKillers[0][pos.Ply] = list.Moves[MoveNum]
+					pos.SearchKillers[0][pos.Ply] = list.Moves[moveNum]
 				}
 
 				return beta
 			}
-			alpha = Score
-			BestMove = list.Moves[MoveNum]
+			alpha = score
+			bestMove = list.Moves[moveNum]
 
-			if list.Moves[MoveNum].MoveType() == Attack {
-				pos.SearchHistory[pos.Squares[BestMove.FromSq()]][BestMove.ToSq()] += uint16(depth)
+			if list.Moves[moveNum].MoveType() == Attack {
+				pos.SearchHistory[pos.Squares[bestMove.FromSq()]][bestMove.ToSq()] += uint16(depth)
 			}
 		}
 	}
 
-	if Legal == 0 {
+	if legal == 0 {
 		if inCheck {
 			return -INFINITE + pos.Ply
 		} else {
@@ -235,8 +235,8 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 		}
 	}
 
-	if alpha != OldAlpha {
-		info.TT[pos.Hash] = BestMove
+	if alpha != oldAlpha {
+		info.TT[pos.Hash] = bestMove
 	}
 
 	return alpha
