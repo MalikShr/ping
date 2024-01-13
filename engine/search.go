@@ -20,7 +20,7 @@ const (
 
 	// A constant to offset the score of the pv and MVV-LVA move higher
 	// than killers and history heuristic moves.
-	MvvLvaOffset uint16 = math.MaxUint16 - 256
+	MvvLvaOffset uint16 = math.MaxUint16 - 500
 )
 
 type Search struct {
@@ -266,7 +266,7 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 			fmt.Printf(" %s", PrMove(info.PvArray[pvNum]))
 		}
 		fmt.Println()
-		//fmt.Printf(" Ordering: %f\n", info.fhf/info.fh)
+		fmt.Printf(" Ordering: %f\n", info.Fhf/info.Fh)
 	}
 
 	fmt.Printf("bestmove %s\n", PrMove(bestMove))
