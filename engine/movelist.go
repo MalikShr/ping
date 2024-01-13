@@ -18,68 +18,66 @@ func InitMvvLva() {
 	}
 }
 
-func (list *MoveList) AddQuietMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
+func (list *MoveList) AddQuietMove(pos *BoardStruct, move Move) {
+	list.Moves[list.Count] = move
 
 	if pos.SearchKillers[0][pos.Ply] == move {
-		list.Moves[list.Count].Score = MvvLvaOffset - FirstKillerMoveScore
+		list.Moves[list.Count].AddScore(MvvLvaOffset - FirstKillerMoveScore)
 	} else if pos.SearchKillers[1][pos.Ply] == move {
-		list.Moves[list.Count].Score = MvvLvaOffset - SecondKillerMoveScore
+		list.Moves[list.Count].AddScore(MvvLvaOffset - SecondKillerMoveScore)
 	} else {
-
-		list.Moves[list.Count].Score = pos.SearchHistory[pos.Squares[FromSq(move)]][ToSq(move)]
+		list.Moves[list.Count].AddScore(pos.SearchHistory[pos.Squares[move.FromSq()]][move.ToSq()])
 	}
 
 	list.Count++
 }
 
-func (list *MoveList) AddCaptureMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = MvvLvaOffset + MvvLvaScores[Captured(move)][pos.Squares[FromSq(move)]]
+func (list *MoveList) AddCaptureMove(pos *BoardStruct, move Move) {
+	captured := pos.Squares[move.ToSq()]
+	attacker := pos.Squares[move.FromSq()]
+
+	list.Moves[list.Count] = move
+	list.Moves[list.Count].AddScore(MvvLvaOffset + MvvLvaScores[captured][attacker])
 	list.Count++
 }
 
-func (list *MoveList) AddEnPassantMove(pos *BoardStruct, move int) {
-	list.Moves[list.Count].Move = move
-	list.Moves[list.Count].Score = MvvLvaOffset + 15
+func (list *MoveList) AddEnPassantMove(pos *BoardStruct, move Move) {
+	list.Moves[list.Count] = move
+	list.Moves[list.Count].AddScore(MvvLvaOffset + 15)
 	list.Count++
 }
 
 func (list *MoveList) AddPawnCapMove(pos *BoardStruct, from int, to int, cap uint8, side uint8) {
-	possibleProms := [4]uint8{wQueen, wRook, wBishop, wKnight}
 	beforePromRank := R7
 
 	if side == Black {
-		possibleProms = [4]uint8{bQueen, bRook, bBishop, bKnight}
 		beforePromRank = R2
 	}
 
 	if RankOf(from) == beforePromRank {
-		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[0], 0))
-		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[1], 0))
-		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[2], 0))
-		list.AddCaptureMove(pos, NewMove(from, to, cap, possibleProms[3], 0))
+		list.AddCaptureMove(pos, NewMove(from, to, Promotion, KnightPromotion))
+		list.AddCaptureMove(pos, NewMove(from, to, Promotion, BishopPromotion))
+		list.AddCaptureMove(pos, NewMove(from, to, Promotion, RookPromotion))
+		list.AddCaptureMove(pos, NewMove(from, to, Promotion, QueenPromotion))
 	} else {
-		list.AddCaptureMove(pos, NewMove(from, to, cap, Empty, 0))
+		list.AddCaptureMove(pos, NewMove(from, to, Quiet, NoFlag))
 	}
 }
 
 func (list *MoveList) AddPawnMove(pos *BoardStruct, from int, to int, side uint8) {
-	possibleProms := [4]uint8{wQueen, wRook, wBishop, wKnight}
 	beforePromRank := R7
 
 	if side == Black {
-		possibleProms = [4]uint8{bQueen, bRook, bBishop, bKnight}
 		beforePromRank = R2
 	}
 
 	if RankOf(from) == beforePromRank {
-		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[0], 0))
-		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[1], 0))
-		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[2], 0))
-		list.AddQuietMove(pos, NewMove(from, to, Empty, possibleProms[3], 0))
+		list.AddQuietMove(pos, NewMove(from, to, Promotion, KnightPromotion))
+		list.AddQuietMove(pos, NewMove(from, to, Promotion, BishopPromotion))
+		list.AddQuietMove(pos, NewMove(from, to, Promotion, RookPromotion))
+		list.AddQuietMove(pos, NewMove(from, to, Promotion, QueenPromotion))
 	} else {
-		list.AddQuietMove(pos, NewMove(from, to, Empty, Empty, 0))
+		list.AddQuietMove(pos, NewMove(from, to, Quiet, NoFlag))
 	}
 }
 
@@ -87,10 +85,10 @@ func (list *MoveList) String() string {
 	moveListStr := "MoveList:\n"
 
 	for i := 0; i < list.Count; i++ {
-		move := list.Moves[i].Move
-		score := list.Moves[i].Score
+		move := list.Moves[i]
+		score := move.Score()
 
-		moveListStr += fmt.Sprintf("Move:%d > %s (score:%d)\n", i+1, PrMove(move), score)
+		moveListStr += fmt.Sprintf("Move:%d > %s (score:%d)\n", i+1, move.String(), score)
 	}
 	moveListStr += fmt.Sprintf("MoveList Total %d Moves:\n\n", list.Count)
 

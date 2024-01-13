@@ -19,7 +19,7 @@ func Perft(depth int, pos *BoardStruct) {
 
 	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
 
-		if !pos.DoMove(list.Moves[MoveNum].Move) {
+		if !pos.DoMove(list.Moves[MoveNum]) {
 			continue
 		}
 		Perft(depth-1, pos)
@@ -39,10 +39,8 @@ func PerftTest(depth int, pos *BoardStruct) {
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)
 
-	var move int
-
 	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
-		move = list.Moves[MoveNum].Move
+		move := list.Moves[MoveNum]
 		if !pos.DoMove(move) {
 			continue
 		}
@@ -50,7 +48,7 @@ func PerftTest(depth int, pos *BoardStruct) {
 		Perft(depth-1, pos)
 		pos.UndoMove()
 		var oldnodes int64 = leafNodes - cumnodes
-		fmt.Printf("move %d : %s : %d\n", MoveNum+1, PrMove(move), oldnodes)
+		fmt.Printf("move %d : %s : %d\n", MoveNum+1, move.String(), oldnodes)
 	}
 
 	fmt.Printf("\nTest Complete : %d nodes visited in %dms\n", leafNodes, time.Now().UnixMilli()-start)

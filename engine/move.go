@@ -2,61 +2,90 @@ package engine
 
 import "fmt"
 
-type Move struct {
-	Move  int
-	Score uint16
+// Thanks for many ideas to the Blunder chess engine https://github.com/algerbrex/blunder
+
+const (
+	// Constants represeting the four possible move types.
+	Quiet     uint8 = 0
+	Attack    uint8 = 1
+	Castle    uint8 = 2
+	Promotion uint8 = 3
+
+	// Constants representing move flags indicating what kind of promotion
+	// is occuring.
+	KnightPromotion uint8 = 0
+	BishopPromotion uint8 = 1
+	RookPromotion   uint8 = 2
+	QueenPromotion  uint8 = 3
+
+	// A constant representing a move flag indicating an attack is an en passant
+	// attack.
+	AttackEP uint8 = 1
+
+	// A constant representing a null flag
+	NoFlag uint8 = 0
+)
+
+type Move uint32
+
+func NewMove(from int, to int, moveType uint8, flag uint8) Move {
+	return Move(uint32(from)<<26 | uint32(to)<<20 | uint32(moveType)<<18 | uint32(flag)<<16)
 }
 
-var MFLAGEP int = 0x40000
-var MFLAGPS int = 0x80000
-var MFLAGCA int = 0x1000000
-
-var MFLAGCAP int = 0x7C000
-var MFLAGPROM int = 0xF00000
-
-func FromSq(m int) int {
-	return m & 0x7F
+// Get the from square of the move.
+func (move Move) FromSq() int {
+	return int((move & 0xfc000000) >> 26)
 }
 
-func ToSq(m int) int {
-	return (m >> 7) & 0x7F
+// Get the to square of the move.
+func (move Move) ToSq() int {
+	return int((move & 0x3f00000) >> 20)
 }
 
-func Captured(m int) uint8 {
-	return uint8((m >> 14)) & 0xF
+// Get the type of the move.
+func (move Move) MoveType() uint8 {
+	return uint8((move & 0xc0000) >> 18)
 }
 
-func Promoted(m int) uint8 {
-	return uint8((m >> 20) & 0xF)
+// Get the flag of the move.
+func (move Move) Flag() uint8 {
+	return uint8((move & 0x30000) >> 16)
 }
 
-func NewMove(from int, to int, capture uint8, promotion uint8, flag int) int {
-	return from | (to << 7) | (int(capture) << 14) | (int(promotion) << 20) | flag
+// Get the score of a move.
+func (move Move) Score() uint16 {
+	return uint16(move & 0xffff)
 }
 
-func PrMove(move int) string {
-	var MvStr string
+// Add a score to the move for move ordering.
+func (move *Move) AddScore(score uint16) {
+	(*move) &= 0xffff0000
+	(*move) |= Move(score)
+}
 
-	ff := FileOf(FromSq(move))
-	rf := RankOf(FromSq(move))
-	ft := FileOf(ToSq(move))
-	rt := RankOf(ToSq(move))
+func (move Move) Equals(m Move) bool {
+	return (move & 0xffff0000) == (m & 0xffff0000)
+}
 
-	promoted := Promoted(move)
+func (move Move) String() string {
+	ff := FileOf(move.FromSq())
+	rf := RankOf(move.FromSq())
+	ft := FileOf(move.ToSq())
+	rt := RankOf(move.ToSq())
 
-	if promoted != 0 {
+	if move.MoveType() == Promotion {
 		pchar := 'q'
-		if IsKn(promoted) {
+
+		switch move.Flag() {
+		case KnightPromotion:
 			pchar = 'n'
-		} else if IsRQ(promoted) && !IsBQ(promoted) {
-			pchar = 'r'
-		} else if !IsRQ(promoted) && IsBQ(promoted) {
+		case BishopPromotion:
 			pchar = 'b'
+		case RookPromotion:
+			pchar = 'r'
 		}
-		MvStr = fmt.Sprintf("%c%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt), pchar)
-	} else {
-		MvStr = fmt.Sprintf("%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt))
+		return fmt.Sprintf("%c%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt), pchar)
 	}
 
-	return MvStr
+	return fmt.Sprintf("%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt))
 }

@@ -33,8 +33,8 @@ type Search struct {
 
 	Stopped bool
 
-	TT      map[uint64]int
-	PvArray [MaxDepth]int
+	TT      map[uint64]Move
+	PvArray [MaxDepth]Move
 
 	Fh  float32
 	Fhf float32
@@ -69,8 +69,8 @@ func PickNextMove(moveNum int, list *MoveList) {
 	bestNum := moveNum
 
 	for i := moveNum; i < list.Count; i++ {
-		if list.Moves[i].Score > bestScore {
-			bestScore = list.Moves[i].Score
+		if list.Moves[i].Score() > bestScore {
+			bestScore = list.Moves[i].Score()
 			bestNum = i
 		}
 	}
@@ -117,7 +117,7 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 
 		PickNextMove(MoveNum, &list)
 
-		if !pos.DoMove(list.Moves[MoveNum].Move) {
+		if !pos.DoMove(list.Moves[MoveNum]) {
 			continue
 		}
 
@@ -139,7 +139,7 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 				return beta
 			}
 			alpha = Score
-			BestMove = list.Moves[MoveNum].Move
+			BestMove = list.Moves[MoveNum]
 		}
 	}
 
@@ -182,8 +182,8 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 
 	if PvMove != NoMove {
 		for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
-			if list.Moves[MoveNum].Move == PvMove {
-				list.Moves[MoveNum].Score = MvvLvaOffset + PVMoveScore
+			if list.Moves[MoveNum].Equals(PvMove) {
+				list.Moves[MoveNum].AddScore(MvvLvaOffset + PVMoveScore)
 			}
 
 		}
@@ -192,7 +192,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	for MoveNum := 0; MoveNum < list.Count; MoveNum++ {
 		PickNextMove(MoveNum, &list)
 
-		if !pos.DoMove(list.Moves[MoveNum].Move) {
+		if !pos.DoMove(list.Moves[MoveNum]) {
 			continue
 		}
 
@@ -211,18 +211,18 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 				}
 				info.Fh++
 
-				if list.Moves[MoveNum].Move&MFLAGCAP != 0 {
+				if list.Moves[MoveNum].MoveType() == Attack {
 					pos.SearchKillers[1][pos.Ply] = pos.SearchKillers[0][pos.Ply]
-					pos.SearchKillers[0][pos.Ply] = list.Moves[MoveNum].Move
+					pos.SearchKillers[0][pos.Ply] = list.Moves[MoveNum]
 				}
 
 				return beta
 			}
 			alpha = Score
-			BestMove = list.Moves[MoveNum].Move
+			BestMove = list.Moves[MoveNum]
 
-			if list.Moves[MoveNum].Move&MFLAGCAP != 0 {
-				pos.SearchHistory[pos.Squares[FromSq(BestMove)]][ToSq(BestMove)] += uint16(depth)
+			if list.Moves[MoveNum].MoveType() == Attack {
+				pos.SearchHistory[pos.Squares[BestMove.FromSq()]][BestMove.ToSq()] += uint16(depth)
 			}
 		}
 	}
@@ -263,13 +263,13 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 			bestScore, currentDepth, info.Nodes, time.Now().UnixMilli()-int64(info.Starttime))
 
 		for pvNum := 0; pvNum < pvMoves; pvNum++ {
-			fmt.Printf(" %s", PrMove(info.PvArray[pvNum]))
+			fmt.Printf(" %s", info.PvArray[pvNum].String())
 		}
 		fmt.Println()
 		fmt.Printf(" Ordering: %f\n", info.Fhf/info.Fh)
 	}
 
-	fmt.Printf("bestmove %s\n", PrMove(bestMove))
+	fmt.Printf("bestmove %s\n", bestMove.String())
 }
 
 func clearForSearch(pos *BoardStruct, info *Search) {
@@ -285,7 +285,7 @@ func clearForSearch(pos *BoardStruct, info *Search) {
 		}
 	}
 
-	info.TT = make(map[uint64]int)
+	info.TT = make(map[uint64]Move)
 	pos.Ply = 0
 
 	info.Stopped = false

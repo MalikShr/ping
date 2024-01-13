@@ -121,7 +121,7 @@ func genPawnMoves(sq int, pos *BoardStruct, list *MoveList, genQuiet bool) {
 		if enPasAttacks != 0 {
 			targetSq := enPasAttacks.PopBit()
 
-			move := NewMove(sq, targetSq, Empty, Empty, MFLAGEP)
+			move := NewMove(sq, targetSq, Attack, AttackEP)
 			list.AddEnPassantMove(pos, move)
 		}
 	}
@@ -142,7 +142,7 @@ func genPawnMoves(sq int, pos *BoardStruct, list *MoveList, genQuiet bool) {
 			list.AddPawnMove(pos, sq, onePawnPush, pos.SideToMove)
 
 			if RankOf(sq) == fistPawnRank && pos.Sides[Both]&(1<<twoPawnPush) == 0 {
-				move := NewMove(sq, twoPawnPush, Empty, Empty, MFLAGPS)
+				move := NewMove(sq, twoPawnPush, Quiet, NoFlag)
 				list.AddQuietMove(pos, move)
 			}
 		}
@@ -154,25 +154,25 @@ func genCastlingMoves(pos *BoardStruct, list *MoveList) {
 	if pos.SideToMove == White {
 		if pos.CastlePerm&wKCastle != 0 && (pos.Sides[Both]&F1_G1) == 0 && !SqAttacked(E1, pos, Black) {
 			if !SqAttacked(F1, pos, Black) && !SqAttacked(G1, pos, Black) {
-				list.AddQuietMove(pos, NewMove(E1, G1, Empty, Empty, MFLAGCA))
+				list.AddQuietMove(pos, NewMove(E1, G1, Castle, NoFlag))
 			}
 		}
 
 		if pos.CastlePerm&wQCastle != 0 && (pos.Sides[Both]&B1_C1_D1) == 0 && !SqAttacked(E1, pos, Black) {
 			if !SqAttacked(C1, pos, Black) && !SqAttacked(D1, pos, Black) {
-				list.AddQuietMove(pos, NewMove(E1, C1, Empty, Empty, MFLAGCA))
+				list.AddQuietMove(pos, NewMove(E1, C1, Castle, NoFlag))
 			}
 		}
 	} else {
 		if pos.CastlePerm&bKCastle != 0 && (pos.Sides[Both]&F8_G8) == 0 && !SqAttacked(E8, pos, White) {
 			if !SqAttacked(F8, pos, White) && !SqAttacked(G8, pos, White) {
-				list.AddQuietMove(pos, NewMove(E8, G8, Empty, Empty, MFLAGCA))
+				list.AddQuietMove(pos, NewMove(E8, G8, Castle, NoFlag))
 			}
 		}
 
 		if pos.CastlePerm&bQCastle != 0 && (pos.Sides[Both]&B8_C8_D8) == 0 && !SqAttacked(E8, pos, White) {
 			if !SqAttacked(C8, pos, White) && !SqAttacked(D8, pos, White) {
-				list.AddQuietMove(pos, NewMove(E8, C8, Empty, Empty, MFLAGCA))
+				list.AddQuietMove(pos, NewMove(E8, C8, Castle, NoFlag))
 			}
 		}
 	}
@@ -184,11 +184,11 @@ func genMovesFromBB(sq int, attacks Bitboard, pos *BoardStruct, list *MoveList, 
 		targetSq := attacks.PopBit()
 
 		if pos.Sides[pos.SideToMove^1]&(1<<targetSq) != 0 {
-			list.AddCaptureMove(pos, NewMove(sq, targetSq, pos.Squares[targetSq], Empty, 0))
+			list.AddCaptureMove(pos, NewMove(sq, targetSq, Attack, NoFlag))
 			continue
 		}
 		if genQuiet {
-			list.AddQuietMove(pos, NewMove(sq, targetSq, Empty, Empty, 0))
+			list.AddQuietMove(pos, NewMove(sq, targetSq, Quiet, NoFlag))
 		}
 	}
 }

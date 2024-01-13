@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -45,7 +46,7 @@ const (
 
 	FENStart = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 
-	NoMove = 0
+	NoMove = Move(0)
 
 	maxGameMoves     = 2048
 	maxPositionMoves = 256
@@ -78,13 +79,15 @@ type BoardStruct struct {
 	PieceList [13][10]int
 
 	SearchHistory [13][64]uint16
-	SearchKillers [2][MaxDepth]int
+	SearchKillers [2][MaxDepth]Move
 }
 
 type State struct {
 	Hash uint64
 
-	Move       int
+	Move     Move
+	Captured uint8
+
 	CastlePerm int
 	EnPas      int
 	Rule50     int
@@ -165,27 +168,28 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 	}
 }
 
-func (pos *BoardStruct) DoMove(move int) bool {
-	from := FromSq(move)
-	to := ToSq(move)
+func (pos *BoardStruct) DoMove(move Move) bool {
+	from := move.FromSq()
+	to := move.ToSq()
 
 	side := pos.SideToMove
 
 	state := State{
 		Hash:       pos.Hash,
 		Move:       move,
+		Captured:   pos.Squares[to],
 		Rule50:     pos.Rule50,
 		EnPas:      pos.EnPas,
 		CastlePerm: pos.CastlePerm,
 	}
 
-	if move&MFLAGEP != 0 {
+	if move.Flag() == AttackEP {
 		if side == White {
 			pos.ClearPiece(to - 8)
 		} else {
 			pos.ClearPiece(to + 8)
 		}
-	} else if move&MFLAGCA != 0 {
+	} else if move.MoveType() == Castle {
 		switch to {
 		case C1:
 			pos.MovePiece(A1, D1)
@@ -213,10 +217,9 @@ func (pos *BoardStruct) DoMove(move int) bool {
 
 	pos.HASHCASTLE()
 
-	captured := Captured(move)
 	pos.Rule50++
 
-	if captured != Empty {
+	if state.Captured != Empty {
 		pos.ClearPiece(to)
 		pos.Rule50 = 0
 	}
@@ -226,7 +229,7 @@ func (pos *BoardStruct) DoMove(move int) bool {
 
 	if PiecePawn[pos.Squares[from]] {
 		pos.Rule50 = 0
-		if move&MFLAGPS != 0 {
+		if math.Abs(float64(from)-float64(to)) == 16 {
 			if side == White {
 				pos.EnPas = from + 8
 			} else {
@@ -238,8 +241,20 @@ func (pos *BoardStruct) DoMove(move int) bool {
 
 	pos.MovePiece(from, to)
 
-	promotedPiece := Promoted(move)
-	if promotedPiece != Empty {
+	if move.MoveType() == Promotion {
+		promotedPiece := Empty
+
+		switch move.Flag() {
+		case KnightPromotion:
+			promotedPiece = allPieces[pos.SideToMove][2]
+		case BishopPromotion:
+			promotedPiece = allPieces[pos.SideToMove][3]
+		case RookPromotion:
+			promotedPiece = allPieces[pos.SideToMove][4]
+		case QueenPromotion:
+			promotedPiece = allPieces[pos.SideToMove][5]
+		}
+
 		pos.ClearPiece(to)
 		pos.AddPiece(to, promotedPiece)
 	}
@@ -265,8 +280,8 @@ func (pos *BoardStruct) UndoMove() {
 	pos.Ply--
 
 	move := pos.History[pos.HistoryPly].Move
-	from := FromSq(move)
-	to := ToSq(move)
+	from := move.FromSq()
+	to := move.ToSq()
 
 	if pos.EnPas != NoSq {
 		pos.HASHEP()
@@ -286,13 +301,13 @@ func (pos *BoardStruct) UndoMove() {
 	pos.SideToMove ^= 1
 	pos.HASHSIDE()
 
-	if MFLAGEP&move != 0 {
+	if move.Flag() == AttackEP {
 		if pos.SideToMove == White {
 			pos.AddPiece(to-8, bPawn)
 		} else {
 			pos.AddPiece(to+8, wPawn)
 		}
-	} else if MFLAGCA&move != 0 {
+	} else if move.MoveType() == Castle {
 		switch to {
 		case C1:
 			pos.MovePiece(D1, A1)
@@ -311,17 +326,17 @@ func (pos *BoardStruct) UndoMove() {
 		pos.KingSq[pos.SideToMove] = from
 	}
 
-	captured := Captured(move)
+	captured := pos.History[pos.HistoryPly].Captured
 	if captured != Empty {
 		pos.AddPiece(to, captured)
 	}
 
-	if Promoted(move) != Empty {
+	if move.MoveType() == Promotion {
 		pos.ClearPiece(from)
 
 		pawn := wPawn
 
-		if PieceCol[Promoted(move)] == Black {
+		if pos.SideToMove == Black {
 			pawn = bPawn
 		}
 
@@ -329,16 +344,16 @@ func (pos *BoardStruct) UndoMove() {
 	}
 }
 
-func (pos *BoardStruct) MoveExists(move int) bool {
+func (pos *BoardStruct) MoveExists(move Move) bool {
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
-		if !pos.DoMove(list.Moves[moveNum].Move) {
+		if !pos.DoMove(list.Moves[moveNum]) {
 			continue
 		}
 		pos.UndoMove()
-		if list.Moves[moveNum].Move == move {
+		if list.Moves[moveNum] == move {
 			return true
 		}
 	}

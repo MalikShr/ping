@@ -21,6 +21,10 @@ var (
 	PieceSlides      = [13]bool{false, false, false, true, true, true, false, false, false, true, true, true, false}
 	NonPawnPieces    = [10]uint8{wKnight, wBishop, wRook, wQueen, wKing, bKnight, bBishop, bRook, bQueen, bKing}
 	SliderPieces     = []uint8{wBishop, wRook, wQueen, bBishop, bRook, bQueen}
+	allPieces        = [2][7]uint8{
+		{Empty, wPawn, wKnight, wBishop, wRook, wQueen, wKing},
+		{Empty, bPawn, bKnight, bBishop, bRook, bQueen, bKing},
+	}
 
 	Mirror64 = [64]int{
 		56, 57, 58, 59, 60, 61, 62, 63,
@@ -90,7 +94,7 @@ func PrSq(sq int) string {
 	return SqStr
 }
 
-func ParseMove(ptrChar string, pos *BoardStruct) int {
+func ParseMove(ptrChar string, pos *BoardStruct) Move {
 	if ptrChar[1] > '8' || ptrChar[1] < '1' {
 		return NoMove
 	}
@@ -109,20 +113,21 @@ func ParseMove(ptrChar string, pos *BoardStruct) int {
 
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)
-	promPiece := Empty
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
-		move := list.Moves[moveNum].Move
-		if FromSq(move) == from && ToSq(move) == to {
-			promPiece = Promoted(move)
-			if promPiece != Empty {
-				if IsRQ(promPiece) && !IsBQ(promPiece) && ptrChar[4] == 'r' {
+		move := list.Moves[moveNum]
+
+		if move.FromSq() == from && move.ToSq() == to {
+			if move.MoveType() == Promotion {
+				moveFlag := move.Flag()
+
+				if moveFlag == KnightPromotion && ptrChar[4] == 'n' {
 					return move
-				} else if !IsRQ(promPiece) && IsBQ(promPiece) && ptrChar[4] == 'b' {
+				} else if moveFlag == BishopPromotion && ptrChar[4] == 'b' {
 					return move
-				} else if IsRQ(promPiece) && IsBQ(promPiece) && ptrChar[4] == 'q' {
+				} else if moveFlag == RookPromotion && ptrChar[4] == 'r' {
 					return move
-				} else if IsKn(promPiece) && ptrChar[4] == 'n' {
+				} else if moveFlag == QueenPromotion && ptrChar[4] == 'q' {
 					return move
 				}
 				continue
