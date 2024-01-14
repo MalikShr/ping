@@ -217,7 +217,7 @@ func EvalPosition(pos *BoardStruct) int {
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
 
-		score -= PstPawn[MIRROR(sq)]
+		score -= PstPawn[Mirror(sq)]
 
 		if (IsolatedMask[sq] & pos.Pawns[Black]) == 0 {
 			score -= PawnIsolated
@@ -237,7 +237,7 @@ func EvalPosition(pos *BoardStruct) int {
 	piece = bKnight
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= PstKnight[MIRROR(sq)]
+		score -= PstKnight[Mirror(sq)]
 	}
 
 	piece = wBishop
@@ -249,7 +249,7 @@ func EvalPosition(pos *BoardStruct) int {
 	piece = bBishop
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= PstBishop[MIRROR(sq)]
+		score -= PstBishop[Mirror(sq)]
 	}
 
 	piece = wRook
@@ -267,7 +267,7 @@ func EvalPosition(pos *BoardStruct) int {
 	piece = bRook
 	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
 		sq = pos.PieceList[piece][pieceNum]
-		score -= PstRook[MIRROR(sq)]
+		score -= PstRook[Mirror(sq)]
 
 		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
 			score -= RookOpenFile
@@ -311,9 +311,9 @@ func EvalPosition(pos *BoardStruct) int {
 	sq = pos.PieceList[piece][0]
 
 	if pos.Material[White] <= EndGameMaterial() {
-		score -= PstKingEG[MIRROR(sq)]
+		score -= PstKingEG[Mirror(sq)]
 	} else {
-		score -= PstKingMG[MIRROR(sq)]
+		score -= PstKingMG[Mirror(sq)]
 	}
 
 	if pos.PieceNum[wBishop] >= 2 {

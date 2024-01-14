@@ -46,8 +46,6 @@ const (
 
 	FENStart = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 
-	NoMove = Move(0)
-
 	maxGameMoves     = 2048
 	maxPositionMoves = 256
 )
@@ -246,13 +244,13 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 
 		switch move.Flag() {
 		case KnightPromotion:
-			promotedPiece = allPieces[pos.SideToMove][2]
+			promotedPiece = AllPieces[pos.SideToMove][Knight]
 		case BishopPromotion:
-			promotedPiece = allPieces[pos.SideToMove][3]
+			promotedPiece = AllPieces[pos.SideToMove][Bishop]
 		case RookPromotion:
-			promotedPiece = allPieces[pos.SideToMove][4]
+			promotedPiece = AllPieces[pos.SideToMove][Rook]
 		case QueenPromotion:
-			promotedPiece = allPieces[pos.SideToMove][5]
+			promotedPiece = AllPieces[pos.SideToMove][Queen]
 		}
 
 		pos.ClearPiece(to)

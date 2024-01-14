@@ -24,6 +24,8 @@ const (
 
 	// A constant representing a null flag
 	NoFlag uint8 = 0
+
+	NoMove = Move(0)
 )
 
 type Move uint32
@@ -88,4 +90,49 @@ func (move Move) String() string {
 	}
 
 	return fmt.Sprintf("%c%c%c%c", ('a' + ff), ('1' + rf), ('a' + ft), ('1' + rt))
+}
+
+func ParseMove(ptrChar string, pos *BoardStruct) Move {
+	if ptrChar[1] > '8' || ptrChar[1] < '1' {
+		return NoMove
+	}
+	if ptrChar[3] > '8' || ptrChar[3] < '1' {
+		return NoMove
+	}
+	if ptrChar[0] > 'h' || ptrChar[0] < 'a' {
+		return NoMove
+	}
+	if ptrChar[2] > 'h' || ptrChar[2] < 'a' {
+		return NoMove
+	}
+
+	from := FR2SQ(int(ptrChar[0]-'a'), int(ptrChar[1]-'1'))
+	to := FR2SQ(int(ptrChar[2]-'a'), int(ptrChar[3]-'1'))
+
+	var list MoveList
+	GenerateAllMoves(pos, &list, true)
+
+	for moveNum := 0; moveNum < list.Count; moveNum++ {
+		move := list.Moves[moveNum]
+
+		if move.FromSq() == from && move.ToSq() == to {
+			if move.MoveType() == Promotion {
+				moveFlag := move.Flag()
+
+				if moveFlag == KnightPromotion && ptrChar[4] == 'n' {
+					return move
+				} else if moveFlag == BishopPromotion && ptrChar[4] == 'b' {
+					return move
+				} else if moveFlag == RookPromotion && ptrChar[4] == 'r' {
+					return move
+				} else if moveFlag == QueenPromotion && ptrChar[4] == 'q' {
+					return move
+				}
+				continue
+			}
+			return move
+		}
+	}
+
+	return NoMove
 }

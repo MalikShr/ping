@@ -34,22 +34,22 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, genQuiet bool) {
 			genPawnMoves(sq, pos, list, genQuiet)
 		}
 
-		if IsKn(piece) {
+		if PieceKnight[piece] {
 			knighAttacks := KnightAttacks[sq] & ^pos.Sides[pos.SideToMove]
 			genMovesFromBB(sq, knighAttacks, pos, list, genQuiet)
 		}
 
-		if IsBQ(piece) {
+		if PieceBishopQueen[piece] {
 			bishopAttacks := genBishopMoves(sq, pos.Sides[Both]) & ^pos.Sides[pos.SideToMove]
 			genMovesFromBB(sq, bishopAttacks, pos, list, genQuiet)
 		}
 
-		if IsRQ(piece) {
+		if PieceRookQueen[piece] {
 			rookAttacks := genRookMoves(sq, pos.Sides[Both]) & ^pos.Sides[pos.SideToMove]
 			genMovesFromBB(sq, rookAttacks, pos, list, genQuiet)
 		}
 
-		if IsKi(piece) {
+		if PieceKing[piece] {
 			kingAttacks := KingAttacks[sq] & ^pos.Sides[pos.SideToMove]
 			genMovesFromBB(sq, kingAttacks, pos, list, genQuiet)
 		}
