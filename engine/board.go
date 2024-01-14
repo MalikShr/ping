@@ -203,9 +203,9 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 	}
 
 	if pos.EnPas != NoSq {
-		pos.HASHEP()
+		pos.Hash ^= PieceKeys[Empty][pos.EnPas]
 	}
-	pos.HASHCASTLE()
+	pos.Hash ^= CastleKeys[pos.CastlePerm]
 
 	pos.History[pos.HistoryPly] = state
 
@@ -213,7 +213,7 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 	pos.CastlePerm &= CastlePerm[to]
 	pos.EnPas = NoSq
 
-	pos.HASHCASTLE()
+	pos.Hash ^= CastleKeys[pos.CastlePerm]
 
 	pos.Rule50++
 
@@ -233,7 +233,7 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 			} else {
 				pos.EnPas = from - 8
 			}
-			pos.HASHEP()
+			pos.Hash ^= PieceKeys[Empty][pos.EnPas]
 		}
 	}
 
@@ -262,7 +262,7 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 	}
 
 	pos.SideToMove ^= 1
-	pos.HASHSIDE()
+	pos.Hash ^= SideKey
 
 	if SqAttacked(pos.KingSq[side], pos, pos.SideToMove) {
 		pos.UndoMove()
@@ -278,10 +278,10 @@ func (pos *BoardStruct) UndoMove() {
 	pos.Ply--
 
 	if pos.EnPas != NoSq {
-		pos.HASHEP()
+		pos.Hash ^= PieceKeys[Empty][pos.EnPas]
 	}
 
-	pos.HASHCASTLE()
+	pos.Hash ^= CastleKeys[pos.CastlePerm]
 
 	prevState := pos.History[pos.HistoryPly]
 
@@ -296,12 +296,12 @@ func (pos *BoardStruct) UndoMove() {
 	captured := pos.History[pos.HistoryPly].Captured
 
 	if pos.EnPas != NoSq {
-		pos.HASHEP()
+		pos.Hash ^= PieceKeys[Empty][pos.EnPas]
 	}
-	pos.HASHCASTLE()
+	pos.Hash ^= CastleKeys[pos.CastlePerm]
 
 	pos.SideToMove ^= 1
-	pos.HASHSIDE()
+	pos.Hash ^= SideKey
 
 	if move.Flag() == AttackEP {
 		if pos.SideToMove == White {
@@ -369,13 +369,13 @@ func (pos *BoardStruct) MovePiece(from int, to int) {
 	pos.Pieces[piece].ClearBit(from)
 	pos.Sides[col].ClearBit(from)
 	pos.Sides[Both].ClearBit(from)
-	pos.HASHPIECE(piece, from)
+	pos.Hash ^= PieceKeys[piece][from]
 	pos.Squares[from] = Empty
 
 	pos.Pieces[piece].SetBit(to)
 	pos.Sides[col].SetBit(to)
 	pos.Sides[Both].SetBit(to)
-	pos.HASHPIECE(piece, to)
+	pos.Hash ^= PieceKeys[piece][to]
 	pos.Squares[to] = piece
 
 	if !PieceBig[piece] {
@@ -396,7 +396,7 @@ func (pos *BoardStruct) MovePiece(from int, to int) {
 func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
 	col := PieceCol[piece]
 
-	pos.HASHPIECE(piece, sq)
+	pos.Hash ^= PieceKeys[piece][sq]
 
 	pos.Squares[sq] = piece
 	pos.Sides[col].SetBit(sq)
@@ -420,7 +420,7 @@ func (pos *BoardStruct) ClearPiece(sq int) {
 	col := PieceCol[piece]
 	tPieceNum := -1
 
-	pos.HASHPIECE(piece, sq)
+	pos.Hash ^= PieceKeys[piece][sq]
 
 	pos.Sides[col].ClearBit(sq)
 	pos.Sides[Both].ClearBit(sq)
