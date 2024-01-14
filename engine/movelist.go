@@ -7,7 +7,7 @@ type MoveList struct {
 	Count int
 }
 
-var VictimScore = [13]uint16{0, 10, 20, 30, 40, 50, 60, 10, 20, 30, 40, 50, 60}
+var VictimScore = [13]uint16{0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}
 var MvvLvaScores [13][13]uint16
 
 func InitMvvLva() {

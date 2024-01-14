@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 	"time"
 )
 
@@ -12,15 +11,15 @@ const (
 
 	// A constant representing the score of the principal variation
 	// move from the transposition table.
-	PVMoveScore uint16 = 120
+	PVMoveScore uint16 = 10_000
 
 	// A constant representing the score offsets of the killer moves.
-	FirstKillerMoveScore  uint16 = 10
-	SecondKillerMoveScore uint16 = 20
+	FirstKillerMoveScore  uint16 = 1000
+	SecondKillerMoveScore uint16 = 2000
 
 	// A constant to offset the score of the pv and MVV-LVA move higher
 	// than killers and history heuristic moves.
-	MvvLvaOffset uint16 = math.MaxUint16 - 500
+	MvvLvaOffset uint16 = 10_000
 )
 
 type Search struct {
