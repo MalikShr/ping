@@ -65,9 +65,6 @@ func TestGoCommand(uci UCIInterface) {
 	pos.ParseFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b KQ - 3 2")
 	uci.handleGo("go depth 6", &info, &pos)
 
-	move := NewMove(0, 1, Attack, AttackEP)
-	fmt.Println(move.String())
-
 	//Expected nodes on depth 6 42103 or lower
 }
 
@@ -78,7 +75,7 @@ func Uci() {
 	var pos BoardStruct
 	var info Search
 	inter := UCIInterface{}
-	//TestGoCommand(inter)
+	TestGoCommand(inter)
 	info.TT = make(map[uint64]Move)
 
 	inter.handleUci()

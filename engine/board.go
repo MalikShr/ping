@@ -58,23 +58,16 @@ type BoardStruct struct {
 	Pawns   [3]Bitboard
 	Sides   [3]Bitboard
 
-	KingSq [2]int
-
 	SideToMove uint8
+
+	CastlePerm int
 	EnPas      int
 	Rule50     int
 
 	Ply        int
 	HistoryPly int
 
-	CastlePerm int
-
-	PieceNum [13]int
-	Material [2]int
-
 	History [maxGameMoves]State
-
-	PieceList [13][10]int
 
 	SearchHistory [13][64]uint16
 	SearchKillers [2][MaxDepth]Move
@@ -98,9 +91,7 @@ func (pos *BoardStruct) ResetBoard() {
 	}
 
 	for i := 0; i < 2; i++ {
-		pos.Material[i] = 0
 		pos.Pawns[i] = 0
-		pos.KingSq[i] = NoSq
 	}
 
 	for i := 0; i < 13; i++ {
@@ -110,10 +101,6 @@ func (pos *BoardStruct) ResetBoard() {
 	for i := 0; i < 3; i++ {
 		pos.Pawns[i] = 0
 		pos.Sides[i] = 0
-	}
-
-	for i := 0; i < 13; i++ {
-		pos.PieceNum[i] = 0
 	}
 
 	pos.SideToMove = Both
@@ -136,19 +123,6 @@ func (pos *BoardStruct) UpdateListsMaterial() {
 
 		if piece != Empty {
 			color := PieceCol[piece]
-
-			pos.Material[color] += PieceVal[piece]
-
-			pos.PieceList[piece][pos.PieceNum[piece]] = sq
-			pos.PieceNum[piece]++
-
-			if piece == wKing {
-				pos.KingSq[White] = sq
-			}
-
-			if piece == bKing {
-				pos.KingSq[Black] = sq
-			}
 
 			pos.Sides[color].SetBit(sq)
 			pos.Sides[Both].SetBit(sq)
@@ -257,14 +231,10 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 		pos.AddPiece(to, promotedPiece)
 	}
 
-	if PieceKing[pos.Squares[to]] {
-		pos.KingSq[pos.SideToMove] = to
-	}
-
 	pos.SideToMove ^= 1
 	pos.Hash ^= SideKey
 
-	if SqAttacked(pos.KingSq[side], pos, pos.SideToMove) {
+	if SqAttacked(pos.Pieces[AllPieces[side][King]].Msb(), pos, pos.SideToMove) {
 		pos.UndoMove()
 
 		return false
@@ -324,10 +294,6 @@ func (pos *BoardStruct) UndoMove() {
 
 	pos.MovePiece(to, from)
 
-	if PieceKing[pos.Squares[from]] {
-		pos.KingSq[pos.SideToMove] = from
-	}
-
 	if captured != Empty {
 		pos.AddPiece(to, captured)
 	}
@@ -384,13 +350,6 @@ func (pos *BoardStruct) MovePiece(from int, to int) {
 		pos.Pawns[col].SetBit(to)
 		pos.Pawns[Both].SetBit(to)
 	}
-
-	for index := 0; index < pos.PieceNum[piece]; index++ {
-		if pos.PieceList[piece][index] == from {
-			pos.PieceList[piece][index] = to
-			break
-		}
-	}
 }
 
 func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
@@ -407,18 +366,12 @@ func (pos *BoardStruct) AddPiece(sq int, piece uint8) {
 		pos.Pawns[col].SetBit(sq)
 		pos.Pawns[Both].SetBit(sq)
 	}
-
-	pos.Material[col] += PieceVal[piece]
-	pos.PieceList[piece][pos.PieceNum[piece]] = sq
-
-	pos.PieceNum[piece]++
 }
 
 func (pos *BoardStruct) ClearPiece(sq int) {
 	piece := pos.Squares[sq]
 
 	col := PieceCol[piece]
-	tPieceNum := -1
 
 	pos.Hash ^= PieceKeys[piece][sq]
 
@@ -426,23 +379,11 @@ func (pos *BoardStruct) ClearPiece(sq int) {
 	pos.Sides[Both].ClearBit(sq)
 	pos.Pieces[piece].ClearBit(sq)
 	pos.Squares[sq] = Empty
-	pos.Material[col] -= PieceVal[piece]
 
 	if !PieceBig[piece] {
 		pos.Pawns[col].ClearBit(sq)
 		pos.Pawns[Both].ClearBit(sq)
 	}
-
-	for i := 0; i < pos.PieceNum[piece]; i++ {
-		if pos.PieceList[piece][i] == sq {
-			tPieceNum = i
-			break
-		}
-	}
-
-	pos.PieceNum[piece]--
-
-	pos.PieceList[piece][tPieceNum] = pos.PieceList[piece][pos.PieceNum[piece]]
 }
 
 func (pos *BoardStruct) ParseFen(fen string) {

@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"math/bits"
+)
 
 type Bitboard uint64
 
@@ -52,6 +55,10 @@ func (bb *Bitboard) ClearBit(sq int) {
 
 func (bb *Bitboard) SetBit(sq int) {
 	*bb |= SetMask[sq]
+}
+
+func (bb Bitboard) Msb() int {
+	return int(bits.TrailingZeros64(uint64(bb)))
 }
 
 func (bb Bitboard) String() string {

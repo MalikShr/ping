@@ -1,14 +1,19 @@
 package engine
 
-import "math"
+import (
+	"math"
+)
 
 const (
-	PawnIsolated      = -10
-	RookOpenFile      = 10
-	RookSemiOpenFile  = 5
-	QueenOpenFile     = 5
-	QueenSemiOpenFile = 3
-	BishopPair        = 30
+	IsolatedPawnPenalty = -10
+	DoublePawnPenalty   = -10
+	RookOpenFile        = 10
+	RookSemiOpenFile    = 5
+	QueenOpenFile       = 5
+	QueenSemiOpenFile   = 3
+	BishopPair          = 30
+
+	EndGameMaterialScore = 21340
 )
 
 var BlackPassedMask [64]Bitboard
@@ -141,42 +146,54 @@ func InitEvalMasks() {
 	}
 }
 
-func MaterialDraw(pos *BoardStruct) bool {
-	if pos.PieceNum[wRook] == 0 && pos.PieceNum[bRook] == 0 &&
-		pos.PieceNum[wQueen] == 0 && pos.PieceNum[bQueen] == 0 {
+func materialDraw(pos *BoardStruct) bool {
+	whiteKnights := pos.Pieces[wKnight].CountBits()
+	blackKnights := pos.Pieces[bKnight].CountBits()
 
-		if pos.PieceNum[bBishop] == 0 && pos.PieceNum[wBishop] == 0 {
-			if pos.PieceNum[wKnight] < 3 && pos.PieceNum[bKnight] < 3 {
+	whiteBishops := pos.Pieces[wBishop].CountBits()
+	blackBishops := pos.Pieces[bBishop].CountBits()
+
+	whiteRooks := pos.Pieces[wRook].CountBits()
+	blackRooks := pos.Pieces[bRook].CountBits()
+
+	whiteQueens := pos.Pieces[wQueen].CountBits()
+	blackQueens := pos.Pieces[bQueen].CountBits()
+
+	if whiteRooks == 0 && blackRooks == 0 &&
+		whiteQueens == 0 && blackQueens == 0 {
+
+		if blackBishops == 0 && whiteBishops == 0 {
+			if whiteKnights < 3 && blackKnights < 3 {
 				return true
 			}
-		} else if pos.PieceNum[wKnight] == 0 && pos.PieceNum[bKnight] == 0 {
-			if math.Abs(float64(pos.PieceNum[wBishop]-pos.PieceNum[bBishop])) < 2 {
+		} else if whiteKnights == 0 && blackKnights == 0 {
+			if math.Abs(float64(whiteBishops-blackBishops)) < 2 {
 				return true
 			}
-		} else if (pos.PieceNum[wKnight] < 3 && pos.PieceNum[wBishop] == 0) ||
-			(pos.PieceNum[wBishop] == 1 && pos.PieceNum[wKnight] == 0) {
+		} else if (whiteKnights < 3 && whiteBishops == 0) ||
+			(whiteBishops == 1 && whiteKnights == 0) {
 
-			if (pos.PieceNum[bKnight] < 3 && pos.PieceNum[bBishop] == 0) ||
-				(pos.PieceNum[bBishop] == 1 && pos.PieceNum[bKnight] == 0) {
+			if (blackKnights < 3 && blackBishops == 0) ||
+				(blackBishops == 1 && blackKnights == 0) {
 				return true
 			}
 		}
-	} else if pos.PieceNum[wQueen] == 0 && pos.PieceNum[bQueen] == 0 {
-		if pos.PieceNum[wRook] == 1 && pos.PieceNum[bRook] == 1 {
-			if (pos.PieceNum[wKnight]+pos.PieceNum[wBishop]) < 2 &&
-				(pos.PieceNum[bKnight]+pos.PieceNum[bBishop]) < 2 {
+	} else if whiteQueens == 0 && blackQueens == 0 {
+		if whiteRooks == 1 && blackRooks == 1 {
+			if (whiteKnights+whiteBishops) < 2 &&
+				(blackKnights+blackBishops) < 2 {
 				return true
 			}
-		} else if pos.PieceNum[wRook] == 1 && pos.PieceNum[bRook] == 0 {
-			if (pos.PieceNum[wKnight]+pos.PieceNum[wBishop] == 0) &&
-				(((pos.PieceNum[bKnight] + pos.PieceNum[bBishop]) == 1) ||
-					((pos.PieceNum[bKnight] + pos.PieceNum[bBishop]) == 2)) {
+		} else if whiteRooks == 1 && blackRooks == 0 {
+			if (whiteKnights+whiteBishops == 0) &&
+				(((blackKnights + blackBishops) == 1) ||
+					((blackKnights + blackBishops) == 2)) {
 				return true
 			}
-		} else if pos.PieceNum[bRook] == 1 && pos.PieceNum[wRook] == 0 {
-			if (pos.PieceNum[bKnight]+pos.PieceNum[bBishop] == 0) &&
-				(((pos.PieceNum[wKnight] + pos.PieceNum[wBishop]) == 1) ||
-					((pos.PieceNum[wKnight] + pos.PieceNum[wBishop]) == 2)) {
+		} else if blackRooks == 1 && whiteRooks == 0 {
+			if (blackKnights+blackBishops == 0) &&
+				(((whiteKnights + whiteBishops) == 1) ||
+					((whiteKnights + whiteBishops) == 2)) {
 				return true
 			}
 		}
@@ -184,142 +201,117 @@ func MaterialDraw(pos *BoardStruct) bool {
 	return false
 }
 
-func EndGameMaterial() int {
-	return (1*PieceVal[wRook] + 2*PieceVal[wKnight] + 2*PieceVal[wPawn] + PieceVal[wKing])
+func getMaterial(pos *BoardStruct, side uint8) int {
+	materialVal := 0
+
+	for piece := AllPieces[side][Pawn]; piece <= AllPieces[side][King]; piece++ {
+		materialVal += pos.Pieces[piece].CountBits() * PieceVal[piece]
+	}
+
+	return materialVal
 }
 
 func EvalPosition(pos *BoardStruct) int {
-	var piece uint8
-	var sq int
-	score := pos.Material[White] - pos.Material[Black]
+	whiteMaterial := getMaterial(pos, White)
+	blackMaterial := getMaterial(pos, Black)
 
-	if pos.PieceNum[wPawn] != 0 && pos.PieceNum[bPawn] != 0 && MaterialDraw(pos) {
+	score := whiteMaterial - blackMaterial
+
+	if pos.Pieces[wPawn].CountBits() != 0 && pos.Pieces[bPawn].CountBits() != 0 && materialDraw(pos) {
 		return 0
 	}
 
-	piece = wPawn
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
+	for piece := wPawn; piece <= bKing; piece++ {
+		pieceBB := pos.Pieces[piece]
 
-		score += PstPawn[sq]
+		for pieceBB != 0 {
+			sq := pieceBB.PopBit()
 
-		if (IsolatedMask[sq] & pos.Pawns[White]) == 0 {
-			score += PawnIsolated
-		}
+			switch piece {
+			case wPawn:
+				score += PstPawn[sq]
 
-		if (WhitePassedMask[sq] & pos.Pawns[Black]) == 0 {
-			score += PawnPassed[RankOf(sq)]
-		}
+				if (IsolatedMask[sq] & pos.Pawns[White]) == 0 {
+					score += IsolatedPawnPenalty
+				}
 
-	}
+				if (FileBBMask[FileOf(sq)] & pos.Pawns[White]).CountBits() >= 2 {
+					score += DoublePawnPenalty
+				}
 
-	piece = bPawn
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
+				if (WhitePassedMask[sq] & pos.Pawns[Black]) == 0 {
+					score += PawnPassed[RankOf(sq)]
+				}
+			case bPawn:
+				score -= PstPawn[Mirror(sq)]
 
-		score -= PstPawn[Mirror(sq)]
+				if (IsolatedMask[sq] & pos.Pawns[Black]) == 0 {
+					score -= IsolatedPawnPenalty
+				}
 
-		if (IsolatedMask[sq] & pos.Pawns[Black]) == 0 {
-			score -= PawnIsolated
-		}
+				if (FileBBMask[FileOf(sq)] & pos.Pawns[Black]).CountBits() >= 2 {
+					score -= DoublePawnPenalty
+				}
 
-		if (BlackPassedMask[sq] & pos.Pawns[White]) == 0 {
-			score -= PawnPassed[7-RankOf(sq)]
-		}
-	}
+				if (BlackPassedMask[sq] & pos.Pawns[White]) == 0 {
+					score -= PawnPassed[7-RankOf(sq)]
+				}
+			case wKnight:
+				score += PstKnight[sq]
+			case bKnight:
+				score -= PstKnight[Mirror(sq)]
+			case wBishop:
+				score += PstBishop[sq]
+			case bBishop:
+				score -= PstBishop[Mirror(sq)]
+			case wRook:
+				score += PstRook[sq]
 
-	piece = wKnight
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score += PstKnight[sq]
-	}
+				if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
+					score += RookOpenFile
+				} else if (pos.Pawns[White] & FileBBMask[FileOf(sq)]) == 0 {
+					score += RookSemiOpenFile
+				}
+			case bRook:
+				score -= PstRook[Mirror(sq)]
 
-	piece = bKnight
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score -= PstKnight[Mirror(sq)]
-	}
-
-	piece = wBishop
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score += PstBishop[sq]
-	}
-
-	piece = bBishop
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score -= PstBishop[Mirror(sq)]
-	}
-
-	piece = wRook
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score += PstRook[sq]
-
-		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
-			score += RookOpenFile
-		} else if (pos.Pawns[White] & FileBBMask[FileOf(sq)]) == 0 {
-			score += RookSemiOpenFile
-		}
-	}
-
-	piece = bRook
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-		score -= PstRook[Mirror(sq)]
-
-		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
-			score -= RookOpenFile
-		} else if (pos.Pawns[Black] & FileBBMask[FileOf(sq)]) == 0 {
-			score -= RookSemiOpenFile
-		}
-	}
-
-	piece = wQueen
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-
-		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
-			score += QueenOpenFile
-		} else if (pos.Pawns[White] & FileBBMask[FileOf(sq)]) == 0 {
-			score += QueenSemiOpenFile
+				if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
+					score -= RookOpenFile
+				} else if (pos.Pawns[Black] & FileBBMask[FileOf(sq)]) == 0 {
+					score -= RookSemiOpenFile
+				}
+			case wQueen:
+				if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
+					score += QueenOpenFile
+				} else if (pos.Pawns[White] & FileBBMask[FileOf(sq)]) == 0 {
+					score += QueenSemiOpenFile
+				}
+			case bQueen:
+				if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
+					score -= QueenOpenFile
+				} else if (pos.Pawns[Black] & FileBBMask[FileOf(sq)]) == 0 {
+					score -= QueenSemiOpenFile
+				}
+			case wKing:
+				if blackMaterial <= EndGameMaterialScore {
+					score += PstKingEG[sq]
+				} else {
+					score += PstKingMG[sq]
+				}
+			case bKing:
+				if whiteMaterial <= EndGameMaterialScore {
+					score -= PstKingEG[Mirror(sq)]
+				} else {
+					score -= PstKingMG[Mirror(sq)]
+				}
+			}
 		}
 	}
 
-	piece = bQueen
-	for pieceNum := 0; pieceNum < pos.PieceNum[piece]; pieceNum++ {
-		sq = pos.PieceList[piece][pieceNum]
-
-		if (pos.Pawns[Both] & FileBBMask[FileOf(sq)]) == 0 {
-			score -= QueenOpenFile
-		} else if (pos.Pawns[Black] & FileBBMask[FileOf(sq)]) == 0 {
-			score -= QueenSemiOpenFile
-		}
-	}
-	//8/p6k/6p1/5p2/P4K2/8/5pB1/8 b - - 2 62
-	piece = wKing
-	sq = pos.PieceList[piece][0]
-
-	if pos.Material[Black] <= EndGameMaterial() {
-		score += PstKingEG[sq]
-	} else {
-		score += PstKingMG[sq]
-	}
-
-	piece = bKing
-	sq = pos.PieceList[piece][0]
-
-	if pos.Material[White] <= EndGameMaterial() {
-		score -= PstKingEG[Mirror(sq)]
-	} else {
-		score -= PstKingMG[Mirror(sq)]
-	}
-
-	if pos.PieceNum[wBishop] >= 2 {
+	if pos.Pieces[wBishop].CountBits() >= 2 {
 		score += BishopPair
 	}
-	if pos.PieceNum[bBishop] >= 2 {
+	if pos.Pieces[bBishop].CountBits() >= 2 {
 		score -= BishopPair
 	}
 
