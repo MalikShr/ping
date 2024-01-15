@@ -32,7 +32,6 @@ func Uci() {
 	info.TT = make(map[uint64]Move)
 
 	for !quit {
-		fmt.Print("\nPing> ")
 		cmd, _ := reader.ReadString('\n')
 
 		words := strings.Fields(cmd)
