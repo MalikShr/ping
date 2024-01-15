@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 	"strings"
 )
 
@@ -155,7 +154,7 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 		CastlePerm: pos.CastlePerm,
 	}
 
-	if move.Flag() == AttackEP {
+	if move.MoveType() == Attack && move.Flag() == AttackEP {
 		if side == White {
 			pos.ClearPiece(to - 8)
 		} else {
@@ -201,7 +200,7 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 
 	if PiecePawn[pos.Squares[from]] {
 		pos.Rule50 = 0
-		if math.Abs(float64(from)-float64(to)) == 16 {
+		if move.MoveType() == Quiet && move.Flag() == DoublePawnPush {
 			if side == White {
 				pos.EnPas = from + 8
 			} else {
@@ -273,7 +272,7 @@ func (pos *BoardStruct) UndoMove() {
 	pos.SideToMove ^= 1
 	pos.Hash ^= SideKey
 
-	if move.Flag() == AttackEP {
+	if move.MoveType() == Attack && move.Flag() == AttackEP {
 		if pos.SideToMove == White {
 			pos.AddPiece(to-8, bPawn)
 		} else {

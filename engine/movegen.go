@@ -142,7 +142,7 @@ func genPawnMoves(sq int, pos *BoardStruct, list *MoveList, genQuiet bool) {
 			list.AddPawnMove(pos, sq, onePawnPush, pos.SideToMove)
 
 			if RankOf(sq) == fistPawnRank && pos.Sides[Both]&(1<<twoPawnPush) == 0 {
-				move := NewMove(sq, twoPawnPush, Quiet, NoFlag)
+				move := NewMove(sq, twoPawnPush, Quiet, DoublePawnPush)
 				list.AddQuietMove(pos, move)
 			}
 		}

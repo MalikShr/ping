@@ -22,6 +22,8 @@ const (
 	// attack.
 	AttackEP uint8 = 1
 
+	DoublePawnPush uint8 = 1
+
 	// A constant representing a null flag
 	NoFlag uint8 = 0
 
