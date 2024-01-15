@@ -7,7 +7,7 @@ const (
 	F8_G8, B8_C8_D8 = 0x6000000000000000, 0xe00000000000000
 )
 
-var CastlePerm = [64]int{
+var CastlePerm = [64]uint8{
 	13, 15, 15, 15, 12, 15, 15, 14,
 	15, 15, 15, 15, 15, 15, 15, 15,
 	15, 15, 15, 15, 15, 15, 15, 15,
@@ -24,10 +24,10 @@ func SQOFFBOARD(sq int) bool {
 
 func GenerateAllMoves(pos *BoardStruct, list *MoveList, genQuiet bool) {
 	// Copy bitboard of all pieces and loop over them
-	allPieces := pos.Sides[pos.SideToMove]
+	pieceBB := pos.Sides[pos.SideToMove]
 
-	for allPieces != 0 {
-		sq := allPieces.PopBit()
+	for pieceBB != 0 {
+		sq := pieceBB.PopBit()
 		piece := pos.Squares[sq]
 
 		if PiecePawn[piece] {

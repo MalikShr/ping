@@ -38,10 +38,10 @@ const (
 	// A constant representing no square
 	NoSq = 64
 
-	wKCastle = 1
-	wQCastle = 2
-	bKCastle = 4
-	bQCastle = 8
+	wKCastle uint8 = 1
+	wQCastle uint8 = 2
+	bKCastle uint8 = 4
+	bQCastle uint8 = 8
 
 	FENStart = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 
@@ -59,7 +59,7 @@ type BoardStruct struct {
 
 	SideToMove uint8
 
-	CastlePerm int
+	CastlePerm uint8
 	EnPas      int
 	Rule50     int
 
@@ -78,7 +78,7 @@ type State struct {
 	Move     Move
 	Captured uint8
 
-	CastlePerm int
+	CastlePerm uint8
 	EnPas      int
 	Rule50     int
 }
@@ -233,7 +233,9 @@ func (pos *BoardStruct) DoMove(move Move) bool {
 	pos.SideToMove ^= 1
 	pos.Hash ^= SideKey
 
-	if SqAttacked(pos.Pieces[AllPieces[side][King]].Msb(), pos, pos.SideToMove) {
+	kingBB := pos.Pieces[AllPieces[side][King]]
+
+	if SqAttacked(kingBB.Msb(), pos, pos.SideToMove) {
 		pos.UndoMove()
 
 		return false

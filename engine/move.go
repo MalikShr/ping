@@ -20,8 +20,7 @@ const (
 
 	// A constant representing a move flag indicating an attack is an en passant
 	// attack.
-	AttackEP uint8 = 1
-
+	AttackEP       uint8 = 1
 	DoublePawnPush uint8 = 1
 
 	// A constant representing a null flag
