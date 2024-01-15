@@ -266,7 +266,7 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 			fmt.Printf(" %s", info.PvArray[pvNum].String())
 		}
 		fmt.Println()
-		fmt.Printf(" Ordering: %f\n", info.Fhf/info.Fh)
+		//fmt.Printf(" Ordering: %f\n", info.Fhf/info.Fh)
 	}
 
 	fmt.Printf("bestmove %s\n", bestMove.String())

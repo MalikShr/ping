@@ -15,7 +15,61 @@ type UCIInterface struct {
 	OptionUseBook bool
 }
 
-func (inter *UCIInterface) ParsePosition(cmd string, pos *BoardStruct) {
+func Uci() {
+	fmt.Println("Author:", Author)
+	fmt.Println("Engine:", EngineName)
+	fmt.Println("Version:", Version)
+
+	fmt.Println("\nType \"help\" to show available commands")
+	fmt.Println()
+
+	quit := false
+	reader := bufio.NewReader(os.Stdin)
+
+	var pos BoardStruct
+	var info Search
+	inter := UCIInterface{}
+	info.TT = make(map[uint64]Move)
+
+	for !quit {
+		fmt.Print("\nPing> ")
+		cmd, _ := reader.ReadString('\n')
+
+		words := strings.Fields(cmd)
+
+		switch words[0] {
+		case "uci":
+			inter.handleUci()
+		case "isready":
+			fmt.Println("readyok")
+		case "position":
+			inter.parsePosition(cmd, &pos)
+		case "setoption":
+			inter.handleSetOption(cmd)
+		case "ucinewgame":
+			inter.parsePosition("position startpos\n", &pos)
+		case "go":
+			inter.handleGo(cmd, &info, &pos)
+		case "help":
+			inter.handleHelp()
+		case "perft":
+			if len(words) >= 2 {
+				depth, _ := strconv.Atoi(words[1])
+				PerftTest(depth, &pos)
+			}
+		case "print":
+			fmt.Println(pos.String())
+		case "quit":
+			quit = true
+		default:
+			fmt.Println("Unknown command ", strings.TrimRight(cmd, "\n"))
+			fmt.Println("Type \"help\" to show available commands")
+		}
+
+	}
+}
+
+func (inter *UCIInterface) parsePosition(cmd string, pos *BoardStruct) {
 	cmd = strings.TrimPrefix(cmd, "position")
 	cmd = strings.TrimPrefix(cmd, " ")
 
@@ -59,73 +113,6 @@ func (inter *UCIInterface) ParsePosition(cmd string, pos *BoardStruct) {
 	}
 }
 
-func TestGoCommand(uci UCIInterface) {
-	var info Search
-	var pos BoardStruct
-	pos.ParseFen("r6r/1b2k1bq/8/8/7B/8/8/R3K2R b KQ - 3 2")
-	uci.handleGo("go depth 6", &info, &pos)
-
-	//Expected nodes on depth 6 42103 or lower
-}
-
-func Uci() {
-	quit := false
-	reader := bufio.NewReader(os.Stdin)
-
-	var pos BoardStruct
-	var info Search
-	inter := UCIInterface{}
-	//TestGoCommand(inter)
-	info.TT = make(map[uint64]Move)
-
-	inter.handleUci()
-
-	var err error
-	inter.OpeningBook, err = LoadPolyglotFile("../book/baron30.bin")
-
-	if err == nil {
-		inter.OptionUseBook = true
-	} else {
-		fmt.Printf("ERROR \n")
-	}
-
-	for !quit {
-		cmd, _ := reader.ReadString('\n')
-
-		words := strings.Fields(cmd)
-
-		switch words[0] {
-		case "uci":
-			inter.handleUci()
-		case "isready":
-			fmt.Println("readyok")
-		case "position":
-			inter.ParsePosition(cmd, &pos)
-		case "setoption":
-			inter.HandleSetOption(cmd)
-		case "ucinewgame":
-			inter.ParsePosition("position startpos\n", &pos)
-		case "go":
-			inter.handleGo(cmd, &info, &pos)
-		case "perft":
-			if len(words) >= 2 {
-				depth, _ := strconv.Atoi(words[1])
-				PerftTest(depth, &pos)
-			}
-		case "print":
-			fmt.Println(pos.String())
-		case "poly":
-			fmt.Printf("Poly Key: %d\n", PolyKeyFromBoard(&pos))
-			fmt.Printf("Poly Key HEX: %x\n", PolyKeyFromBoard(&pos))
-		case "quit":
-			quit = true
-		default:
-			fmt.Println("info string unknown cmd ", cmd)
-		}
-
-	}
-}
-
 func (inter *UCIInterface) handleUci() {
 	fmt.Println("id name Ping")
 	fmt.Println("id author MalikShr")
@@ -144,10 +131,8 @@ func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) 
 			entries := inter.OpeningBook[PolyKeyFromBoard(pos)]
 
 			bestMove := entries[rand.Intn(len(entries))].Move
-			moveDelay := time.Duration(rand.Intn(2500-500) + 500)
 
 			if ParseMove(bestMove, pos) != NoMove {
-				time.Sleep(moveDelay * time.Millisecond)
 				fmt.Printf("bestmove %s\n", bestMove)
 				return
 			}
@@ -217,7 +202,7 @@ func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) 
 	SearchPosition(pos, info)
 }
 
-func (inter *UCIInterface) HandleSetOption(cmd string) {
+func (inter *UCIInterface) handleSetOption(cmd string) {
 	fields := strings.Fields(cmd)
 	var option, value string
 	parsingWhat := ""
@@ -254,4 +239,32 @@ func (inter *UCIInterface) HandleSetOption(cmd string) {
 			fmt.Println("Failed to load opening book...")
 		}
 	}
+}
+
+func (inter *UCIInterface) handleHelp() {
+	fmt.Println("Available Commands: ")
+	fmt.Println("\tuci - Start Uci Protocol ")
+	fmt.Println("\tperft <DEPTH>: Run perft up to <DEPTH>")
+
+	fmt.Println("\tposition - Load a FEN string")
+	fmt.Println("\t\t-startpos ")
+	fmt.Println("\t\t-fen FEN")
+
+	fmt.Println("\tprint - Display current board position")
+	fmt.Println("\tsetoption <NAME> value <VALUE>")
+	fmt.Println("\tgo - Make the computer thinking")
+
+	fmt.Println("\t\t-wtime <MILLISECONDS>")
+	fmt.Println("\t\t-btime <MILLISECONDS>")
+	fmt.Println("\t\t-winc <MILLISECONDS>")
+	fmt.Println("\t\t-binc <MILLISECONDS>")
+	fmt.Println("\t\t-movetime <MILLISECONDS>")
+
+	fmt.Println("\t\t-depth <INTEGER>")
+	fmt.Println("\t\t-movestogo <INTEGER>")
+
+	fmt.Println("\t\tInfinity")
+
+	fmt.Println("\thelp - display this help message")
+	fmt.Println("\tquit - Quit the program")
 }
