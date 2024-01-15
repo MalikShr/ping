@@ -242,28 +242,28 @@ func (inter *UCIInterface) handleSetOption(cmd string) {
 
 func (inter *UCIInterface) handleHelp() {
 	fmt.Println("Available Commands: ")
-	fmt.Println("\tuci - Start Uci Protocol ")
-	fmt.Println("\tperft <DEPTH>: Run perft up to <DEPTH>")
+	fmt.Println("\t- uci")
+	fmt.Println("\t- perft <DEPTH>")
 
-	fmt.Println("\tposition - Load a FEN string")
-	fmt.Println("\t\t-startpos ")
-	fmt.Println("\t\t-fen FEN")
+	fmt.Println("\t- position")
+	fmt.Println("\t\t- startpos ")
+	fmt.Println("\t\t- fen FEN")
 
-	fmt.Println("\tprint - Display current board position")
-	fmt.Println("\tsetoption <NAME> value <VALUE>")
-	fmt.Println("\tgo - Make the computer thinking")
+	fmt.Println("\t- print")
+	fmt.Println("\t- setoption <NAME> value <VALUE>")
+	fmt.Println("\t- go")
 
-	fmt.Println("\t\t-wtime <MILLISECONDS>")
-	fmt.Println("\t\t-btime <MILLISECONDS>")
-	fmt.Println("\t\t-winc <MILLISECONDS>")
-	fmt.Println("\t\t-binc <MILLISECONDS>")
-	fmt.Println("\t\t-movetime <MILLISECONDS>")
+	fmt.Println("\t\t- wtime <MILLISECONDS>")
+	fmt.Println("\t\t- btime <MILLISECONDS>")
+	fmt.Println("\t\t- winc <MILLISECONDS>")
+	fmt.Println("\t\t- binc <MILLISECONDS>")
+	fmt.Println("\t\t- movetime <MILLISECONDS>")
 
-	fmt.Println("\t\t-depth <INTEGER>")
-	fmt.Println("\t\t-movestogo <INTEGER>")
+	fmt.Println("\t\t- depth <INTEGER>")
+	fmt.Println("\t\t- movestogo <INTEGER>")
 
-	fmt.Println("\t\tInfinity")
+	fmt.Println("\t\t- Infinity")
 
-	fmt.Println("\thelp - display this help message")
-	fmt.Println("\tquit - Quit the program")
+	fmt.Println("\t- help")
+	fmt.Println("\t- quit")
 }
