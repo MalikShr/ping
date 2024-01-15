@@ -319,7 +319,7 @@ func (pos *BoardStruct) MoveExists(move Move) bool {
 			continue
 		}
 		pos.UndoMove()
-		if list.Moves[moveNum] == move {
+		if list.Moves[moveNum].Equals(move) {
 			return true
 		}
 	}
