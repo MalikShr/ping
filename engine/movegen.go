@@ -35,8 +35,8 @@ func GenerateAllMoves(pos *BoardStruct, list *MoveList, genQuiet bool) {
 		}
 
 		if PieceKnight[piece] {
-			knighAttacks := KnightAttacks[sq] & ^pos.Sides[pos.SideToMove]
-			genMovesFromBB(sq, knighAttacks, pos, list, genQuiet)
+			knightAttacks := KnightAttacks[sq] & ^pos.Sides[pos.SideToMove]
+			genMovesFromBB(sq, knightAttacks, pos, list, genQuiet)
 		}
 
 		if PieceBishopQueen[piece] {
