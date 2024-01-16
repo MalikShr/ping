@@ -39,7 +39,7 @@ type Search struct {
 	Fhf float32
 }
 
-func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
+func (search *Search) GetPvLine(depth int, pos *BoardStruct) int {
 	move := search.TT.Probe(pos.Hash).Best
 	count := 0
 
@@ -61,26 +61,9 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 	return count
 }
 
-func PickNextMove(moveNum int, list *MoveList) {
-	var tempMove Move
-	bestScore := uint16(0)
-	bestNum := moveNum
-
-	for i := moveNum; i < list.Count; i++ {
-		if list.Moves[i].Score() > bestScore {
-			bestScore = list.Moves[i].Score()
-			bestNum = i
-		}
-	}
-
-	tempMove = list.Moves[moveNum]
-	list.Moves[moveNum] = list.Moves[bestNum]
-	list.Moves[bestNum] = tempMove
-}
-
-func Quiescence(alpha int, beta int, pos *BoardStruct, search *Search) int {
+func (search *Search) Quiescence(alpha int, beta int, pos *BoardStruct) int {
 	if (search.Nodes & 2047) == 0 {
-		checkUp(search)
+		search.checkUp()
 	}
 
 	search.Nodes++
@@ -120,7 +103,7 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, search *Search) int {
 		}
 
 		legal++
-		score = -Quiescence(-beta, -alpha, pos, search)
+		score = -search.Quiescence(-beta, -alpha, pos)
 		pos.UndoMove()
 
 		if search.Stopped {
@@ -148,13 +131,13 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, search *Search) int {
 	return alpha
 }
 
-func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, search *Search) int {
+func (search *Search) AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct) int {
 	if depth == 0 {
-		return Quiescence(alpha, beta, pos, search)
+		return search.Quiescence(alpha, beta, pos)
 	}
 
 	if (search.Nodes & 2047) == 0 {
-		checkUp(search)
+		search.checkUp()
 	}
 
 	search.Nodes++
@@ -196,7 +179,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, search *Search)
 		}
 
 		legal++
-		score = -AlphaBeta(-beta, -alpha, depth-1, pos, search)
+		score = -search.AlphaBeta(-beta, -alpha, depth-1, pos)
 		pos.UndoMove()
 
 		if search.Stopped {
@@ -241,21 +224,21 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, search *Search)
 	return alpha
 }
 
-func SearchPosition(pos *BoardStruct, search *Search) {
+func (search *Search) SearchPosition(pos *BoardStruct) {
 	bestMove := NoMove
 	bestScore := -INFINITE
 	pvMoves := 0
 
-	clearForSearch(pos, search)
+	search.clearForSearch(pos)
 
 	for currentDepth := 1; currentDepth <= search.Depth; currentDepth++ {
-		bestScore = AlphaBeta(-INFINITE, INFINITE, currentDepth, pos, search)
+		bestScore = search.AlphaBeta(-INFINITE, INFINITE, currentDepth, pos)
 
 		if search.Stopped {
 			break
 		}
 
-		pvMoves = GetPvLine(currentDepth, pos, search)
+		pvMoves = search.GetPvLine(currentDepth, pos)
 		bestMove = search.PvArray[0]
 
 		fmt.Printf("\ninfo score cp %d depth %d nodes %d time %d pv",
@@ -271,7 +254,7 @@ func SearchPosition(pos *BoardStruct, search *Search) {
 	fmt.Printf("bestmove %s\n", bestMove.String())
 }
 
-func clearForSearch(pos *BoardStruct, search *Search) {
+func (search *Search) clearForSearch(pos *BoardStruct) {
 	for index := 0; index < 13; index++ {
 		for index2 := 0; index2 < 64; index2++ {
 			pos.SearchHistory[index][index2] = 0
@@ -292,6 +275,29 @@ func clearForSearch(pos *BoardStruct, search *Search) {
 	search.Fhf = 0
 }
 
+func (search *Search) checkUp() {
+	if search.Timeset && time.Now().UnixMilli() > int64(search.Stoptime) {
+		search.Stopped = true
+	}
+}
+
+func PickNextMove(moveNum int, list *MoveList) {
+	var tempMove Move
+	bestScore := uint16(0)
+	bestNum := moveNum
+
+	for i := moveNum; i < list.Count; i++ {
+		if list.Moves[i].Score() > bestScore {
+			bestScore = list.Moves[i].Score()
+			bestNum = i
+		}
+	}
+
+	tempMove = list.Moves[moveNum]
+	list.Moves[moveNum] = list.Moves[bestNum]
+	list.Moves[bestNum] = tempMove
+}
+
 func isRepetition(pos *BoardStruct) bool {
 	for i := pos.HistoryPly - pos.Rule50; i < pos.HistoryPly-1; i++ {
 		if pos.Hash == pos.History[i].Hash {
@@ -300,10 +306,4 @@ func isRepetition(pos *BoardStruct) bool {
 	}
 
 	return false
-}
-
-func checkUp(search *Search) {
-	if search.Timeset && time.Now().UnixMilli() > int64(search.Stoptime) {
-		search.Stopped = true
-	}
 }

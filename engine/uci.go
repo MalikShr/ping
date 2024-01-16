@@ -198,7 +198,7 @@ func (inter *UCIInterface) handleGo(cmd string, search *Search, pos *BoardStruct
 	}
 
 	fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", gameTime, search.Starttime, search.Stoptime, search.Depth, search.Timeset)
-	SearchPosition(pos, search)
+	search.SearchPosition(pos)
 }
 
 func (inter *UCIInterface) handleSetOption(cmd string, search Search) {
