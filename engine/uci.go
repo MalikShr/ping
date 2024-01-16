@@ -27,9 +27,9 @@ func Uci() {
 	reader := bufio.NewReader(os.Stdin)
 
 	var pos BoardStruct
-	var info Search
+	var search Search
 	inter := UCIInterface{}
-	info.TT = make(map[uint64]Move)
+	search.TT.InitTransTable(DefaultTableSize)
 
 	for !quit {
 		cmd, _ := reader.ReadString('\n')
@@ -44,11 +44,11 @@ func Uci() {
 		case "position":
 			inter.parsePosition(cmd, &pos)
 		case "setoption":
-			inter.handleSetOption(cmd)
+			inter.handleSetOption(cmd, search)
 		case "ucinewgame":
 			inter.parsePosition("position startpos\n", &pos)
 		case "go":
-			inter.handleGo(cmd, &info, &pos)
+			inter.handleGo(cmd, &search, &pos)
 		case "help":
 			inter.handleHelp()
 		case "perft":
@@ -122,7 +122,7 @@ func (inter *UCIInterface) handleUci() {
 	fmt.Println("uciok")
 }
 
-func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) {
+func (inter *UCIInterface) handleGo(cmd string, search *Search, pos *BoardStruct) {
 	// If Opening book is enabled a random move will be logged instead of searching
 
 	if inter.OptionUseBook {
@@ -147,7 +147,7 @@ func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) 
 	movetime := -1
 	gameTime := -1
 	inc := 0
-	info.Timeset = false
+	search.Timeset = false
 
 	for i := 0; i < len(words)-1; i++ {
 		switch words[i] {
@@ -183,25 +183,25 @@ func (inter *UCIInterface) handleGo(cmd string, info *Search, pos *BoardStruct) 
 		}
 	}
 
-	info.Starttime = time.Now().UnixMilli()
-	info.Depth = depth
+	search.Starttime = time.Now().UnixMilli()
+	search.Depth = depth
 
 	if gameTime != -1 {
-		info.Timeset = true
+		search.Timeset = true
 		gameTime /= movestogo
 		gameTime -= 50
-		info.Stoptime = info.Starttime + int64(gameTime) + int64(inc)
+		search.Stoptime = search.Starttime + int64(gameTime) + int64(inc)
 	}
 
 	if depth == -1 {
-		info.Depth = MaxDepth
+		search.Depth = MaxDepth
 	}
 
-	fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", gameTime, info.Starttime, info.Stoptime, info.Depth, info.Timeset)
-	SearchPosition(pos, info)
+	fmt.Printf("time:%d start:%d stop:%d depth:%d timeset:%t\n", gameTime, search.Starttime, search.Stoptime, search.Depth, search.Timeset)
+	SearchPosition(pos, search)
 }
 
-func (inter *UCIInterface) handleSetOption(cmd string) {
+func (inter *UCIInterface) handleSetOption(cmd string, search Search) {
 	fields := strings.Fields(cmd)
 	var option, value string
 	parsingWhat := ""
@@ -222,6 +222,13 @@ func (inter *UCIInterface) handleSetOption(cmd string) {
 	value = strings.TrimSuffix(value, " ")
 
 	switch option {
+	case "Hash":
+		size, err := strconv.Atoi(value)
+		if err == nil {
+			search.TT.InitTransTable(uint64(size))
+		}
+	case "Clear Hash":
+		search.TT.Clear()
 	case "UseBook":
 		if value == "true" {
 			inter.OptionUseBook = true

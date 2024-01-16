@@ -32,7 +32,7 @@ type Search struct {
 
 	Stopped bool
 
-	TT      map[uint64]Move
+	TT      TranspositionTable
 	PvArray [MaxDepth]Move
 
 	Fh  float32
@@ -40,11 +40,10 @@ type Search struct {
 }
 
 func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
-	move := search.TT[pos.Hash]
+	move := search.TT.Probe(pos.Hash).Best
 	count := 0
 
 	for move != NoMove && count < depth {
-
 		if pos.MoveExists(move) {
 			pos.DoMove(move)
 			search.PvArray[count] = move
@@ -52,7 +51,7 @@ func GetPvLine(depth int, pos *BoardStruct, search *Search) int {
 		} else {
 			break
 		}
-		move = search.TT[pos.Hash]
+		move = search.TT.Probe(pos.Hash).Best
 	}
 
 	for pos.Ply > 0 {
@@ -79,12 +78,12 @@ func PickNextMove(moveNum int, list *MoveList) {
 	list.Moves[bestNum] = tempMove
 }
 
-func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
-	if (info.Nodes & 2047) == 0 {
-		checkUp(info)
+func Quiescence(alpha int, beta int, pos *BoardStruct, search *Search) int {
+	if (search.Nodes & 2047) == 0 {
+		checkUp(search)
 	}
 
-	info.Nodes++
+	search.Nodes++
 
 	if isRepetition(pos) || pos.Rule50 >= 100 {
 		return 0
@@ -121,19 +120,19 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 		}
 
 		legal++
-		score = -Quiescence(-beta, -alpha, pos, info)
+		score = -Quiescence(-beta, -alpha, pos, search)
 		pos.UndoMove()
 
-		if info.Stopped {
+		if search.Stopped {
 			return 0
 		}
 
 		if score > alpha {
 			if score >= beta {
 				if legal == 1 {
-					info.Fhf++
+					search.Fhf++
 				}
-				info.Fh++
+				search.Fh++
 
 				return beta
 			}
@@ -143,22 +142,22 @@ func Quiescence(alpha int, beta int, pos *BoardStruct, info *Search) int {
 	}
 
 	if alpha != oldAlpha {
-		info.TT[pos.Hash] = bestMove
+		search.TT.Store(pos.Hash, bestMove)
 	}
 
 	return alpha
 }
 
-func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) int {
+func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, search *Search) int {
 	if depth == 0 {
-		return Quiescence(alpha, beta, pos, info)
+		return Quiescence(alpha, beta, pos, search)
 	}
 
-	if (info.Nodes & 2047) == 0 {
-		checkUp(info)
+	if (search.Nodes & 2047) == 0 {
+		checkUp(search)
 	}
 
-	info.Nodes++
+	search.Nodes++
 
 	if (isRepetition(pos) || pos.Rule50 >= 100) && pos.Ply != 0 {
 		return 0
@@ -178,7 +177,7 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	oldAlpha := alpha
 	bestMove := NoMove
 	score := -INFINITE
-	pvMove := info.TT[pos.Hash]
+	pvMove := search.TT.Probe(pos.Hash).Best
 
 	if pvMove != NoMove {
 		for moveNum := 0; moveNum < list.Count; moveNum++ {
@@ -197,19 +196,19 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 		}
 
 		legal++
-		score = -AlphaBeta(-beta, -alpha, depth-1, pos, info)
+		score = -AlphaBeta(-beta, -alpha, depth-1, pos, search)
 		pos.UndoMove()
 
-		if info.Stopped {
+		if search.Stopped {
 			return 0
 		}
 
 		if score > alpha {
 			if score >= beta {
 				if legal == 1 {
-					info.Fhf++
+					search.Fhf++
 				}
-				info.Fh++
+				search.Fh++
 
 				if list.Moves[moveNum].MoveType() == Attack {
 					pos.SearchKillers[1][pos.Ply] = pos.SearchKillers[0][pos.Ply]
@@ -236,34 +235,34 @@ func AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct, info *Search) i
 	}
 
 	if alpha != oldAlpha {
-		info.TT[pos.Hash] = bestMove
+		search.TT.Store(pos.Hash, bestMove)
 	}
 
 	return alpha
 }
 
-func SearchPosition(pos *BoardStruct, info *Search) {
+func SearchPosition(pos *BoardStruct, search *Search) {
 	bestMove := NoMove
 	bestScore := -INFINITE
 	pvMoves := 0
 
-	clearForSearch(pos, info)
+	clearForSearch(pos, search)
 
-	for currentDepth := 1; currentDepth <= info.Depth; currentDepth++ {
-		bestScore = AlphaBeta(-INFINITE, INFINITE, currentDepth, pos, info)
+	for currentDepth := 1; currentDepth <= search.Depth; currentDepth++ {
+		bestScore = AlphaBeta(-INFINITE, INFINITE, currentDepth, pos, search)
 
-		if info.Stopped {
+		if search.Stopped {
 			break
 		}
 
-		pvMoves = GetPvLine(currentDepth, pos, info)
-		bestMove = info.PvArray[0]
+		pvMoves = GetPvLine(currentDepth, pos, search)
+		bestMove = search.PvArray[0]
 
 		fmt.Printf("\ninfo score cp %d depth %d nodes %d time %d pv",
-			bestScore, currentDepth, info.Nodes, time.Now().UnixMilli()-int64(info.Starttime))
+			bestScore, currentDepth, search.Nodes, time.Now().UnixMilli()-int64(search.Starttime))
 
 		for pvNum := 0; pvNum < pvMoves; pvNum++ {
-			fmt.Printf(" %s", info.PvArray[pvNum].String())
+			fmt.Printf(" %s", search.PvArray[pvNum].String())
 		}
 		fmt.Println()
 		//fmt.Printf(" Ordering: %f\n", info.Fhf/info.Fh)
@@ -272,7 +271,7 @@ func SearchPosition(pos *BoardStruct, info *Search) {
 	fmt.Printf("bestmove %s\n", bestMove.String())
 }
 
-func clearForSearch(pos *BoardStruct, info *Search) {
+func clearForSearch(pos *BoardStruct, search *Search) {
 	for index := 0; index < 13; index++ {
 		for index2 := 0; index2 < 64; index2++ {
 			pos.SearchHistory[index][index2] = 0
@@ -285,13 +284,12 @@ func clearForSearch(pos *BoardStruct, info *Search) {
 		}
 	}
 
-	info.TT = make(map[uint64]Move)
 	pos.Ply = 0
 
-	info.Stopped = false
-	info.Nodes = 0
-	info.Fh = 0
-	info.Fhf = 0
+	search.Stopped = false
+	search.Nodes = 0
+	search.Fh = 0
+	search.Fhf = 0
 }
 
 func isRepetition(pos *BoardStruct) bool {
@@ -304,8 +302,8 @@ func isRepetition(pos *BoardStruct) bool {
 	return false
 }
 
-func checkUp(info *Search) {
-	if info.Timeset && time.Now().UnixMilli() > int64(info.Stoptime) {
-		info.Stopped = true
+func checkUp(search *Search) {
+	if search.Timeset && time.Now().UnixMilli() > int64(search.Stoptime) {
+		search.Stopped = true
 	}
 }
