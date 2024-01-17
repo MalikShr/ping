@@ -16,9 +16,7 @@ type UCIInterface struct {
 }
 
 func Uci() {
-	fmt.Println("Author:", Author)
-	fmt.Println("Engine:", EngineName)
-	fmt.Println("Version:", Version)
+	fmt.Printf("Ping %s by MalikShr\n", Version)
 
 	fmt.Println("\nType \"help\" to show available commands")
 	fmt.Println()
@@ -30,6 +28,8 @@ func Uci() {
 	var search Search
 	inter := UCIInterface{}
 	search.TT.InitTransTable(DefaultTableSize)
+
+	pos.ParseFen(FENStart)
 
 	for !quit {
 		cmd, _ := reader.ReadString('\n')
@@ -248,7 +248,7 @@ func (inter *UCIInterface) handleSetOption(cmd string, search Search) {
 }
 
 func (inter *UCIInterface) handleHelp() {
-	fmt.Println("Available Commands: ")
+	fmt.Println("\nAvailable Commands: ")
 	fmt.Println("\t- uci")
 	fmt.Println("\t- perft <DEPTH>")
 
@@ -273,4 +273,5 @@ func (inter *UCIInterface) handleHelp() {
 
 	fmt.Println("\t- help")
 	fmt.Println("\t- quit")
+	fmt.Println()
 }

@@ -2,8 +2,6 @@ package engine
 
 import "fmt"
 
-const EngineName = "Ping"
-const Author = "Malik.Shr"
 const Version = "1.0.0"
 
 const (

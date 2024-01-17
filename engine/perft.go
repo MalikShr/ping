@@ -28,9 +28,6 @@ func Perft(depth int, pos *BoardStruct) {
 }
 
 func PerftTest(depth int, pos *BoardStruct) {
-
-	fmt.Println(pos.String())
-
 	fmt.Printf("\nStarting Test To Depth:%d\n", depth)
 	leafNodes = 0
 
@@ -48,8 +45,15 @@ func PerftTest(depth int, pos *BoardStruct) {
 		Perft(depth-1, pos)
 		pos.UndoMove()
 		var oldnodes int64 = leafNodes - cumnodes
-		fmt.Printf("move %d : %s : %d\n", moveNum+1, move.String(), oldnodes)
+		fmt.Printf("move %d > %s : %d\n", moveNum+1, move.String(), oldnodes)
 	}
 
-	fmt.Printf("\nTest Complete : %d nodes visited in %dms\n", leafNodes, time.Now().UnixMilli()-start)
+	totalTimeInMs := time.Now().UnixMilli() - start
+	totalTimeInS := float64(totalTimeInMs) / 1000
+
+	fmt.Println()
+	fmt.Println("===========================")
+	fmt.Printf("Total time (ms) : %d\n", totalTimeInMs)
+	fmt.Printf("Nodes searched : %d\n", leafNodes)
+	fmt.Printf("Nodes/second : %d\n\n", int64(float64(leafNodes)/totalTimeInS))
 }
