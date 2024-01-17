@@ -166,6 +166,7 @@ func (search *Search) AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct
 		for moveNum := 0; moveNum < list.Count; moveNum++ {
 			if list.Moves[moveNum].Equals(pvMove) {
 				list.Moves[moveNum].AddScore(MvvLvaOffset + PVMoveScore)
+				break
 			}
 
 		}
