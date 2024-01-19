@@ -38,6 +38,7 @@ func (tt *TranspositionTable) Probe(hash uint64) SearchEntry {
 }
 
 func (tt *TranspositionTable) Clear() {
-	tt.Entries = nil
-	tt.Size = 0
+	for i := uint64(0); i < tt.Size; i++ {
+		tt.Entries[i] = *new(SearchEntry)
+	}
 }

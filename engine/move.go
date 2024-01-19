@@ -66,7 +66,7 @@ func (move *Move) AddScore(score uint16) {
 	(*move) |= Move(score)
 }
 
-func (move Move) Equals(m Move) bool {
+func (move Move) Equal(m Move) bool {
 	return (move & 0xffff0000) == (m & 0xffff0000)
 }
 

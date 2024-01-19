@@ -56,6 +56,8 @@ func Uci() {
 				depth, _ := strconv.Atoi(words[1])
 				PerftTest(depth, &pos)
 			}
+		case "eval":
+			fmt.Printf("cp %d\n", EvalPosition(&pos))
 		case "print":
 			fmt.Println(pos.String())
 		case "quit":
@@ -116,9 +118,10 @@ func (inter *UCIInterface) handleUci() {
 	fmt.Println("id name Ping")
 	fmt.Println("id author MalikShr")
 
-	fmt.Println("option name Hash type spin default 128 min 16 max 1024")
-	fmt.Println("option name Threads type spin default 1 min 1 max 16")
-	fmt.Print("option name UseBook type check default false\n")
+	fmt.Println("option name Hash type spin default 64 min 1 max 32000")
+	fmt.Println("option name Clear Hash type button")
+	fmt.Println("option name UseBook type check default false")
+	fmt.Println("option name BookPath type string default")
 	fmt.Println("uciok")
 }
 
@@ -250,13 +253,11 @@ func (inter *UCIInterface) handleSetOption(cmd string, search Search) {
 func (inter *UCIInterface) handleHelp() {
 	fmt.Println("\nAvailable Commands: ")
 	fmt.Println("\t- uci")
-	fmt.Println("\t- perft <DEPTH>")
 
 	fmt.Println("\t- position")
 	fmt.Println("\t\t- startpos ")
 	fmt.Println("\t\t- fen FEN")
 
-	fmt.Println("\t- print")
 	fmt.Println("\t- setoption <NAME> value <VALUE>")
 	fmt.Println("\t- go")
 
@@ -270,6 +271,10 @@ func (inter *UCIInterface) handleHelp() {
 	fmt.Println("\t\t- movestogo <INTEGER>")
 
 	fmt.Println("\t\t- Infinity")
+
+	fmt.Println("\t- print")
+	fmt.Println("\t- perft <DEPTH>")
+	fmt.Println("\t- eval")
 
 	fmt.Println("\t- help")
 	fmt.Println("\t- quit")

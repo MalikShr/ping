@@ -2,6 +2,10 @@ package engine
 
 import "fmt"
 
+const (
+	maxPositionMoves = 256
+)
+
 type MoveList struct {
 	Moves [maxPositionMoves]Move
 	Count int
@@ -79,6 +83,23 @@ func (list *MoveList) AddPawnMove(pos *BoardStruct, from int, to int, side uint8
 	} else {
 		list.AddQuietMove(pos, NewMove(from, to, Quiet, NoFlag))
 	}
+}
+
+func (list *MoveList) PickNextMove(moveIndex int) {
+	var tempMove Move
+	bestScore := uint16(0)
+	bestNum := moveIndex
+
+	for i := moveIndex; i < list.Count; i++ {
+		if list.Moves[i].Score() > bestScore {
+			bestScore = list.Moves[i].Score()
+			bestNum = i
+		}
+	}
+
+	tempMove = list.Moves[moveIndex]
+	list.Moves[moveIndex] = list.Moves[bestNum]
+	list.Moves[bestNum] = tempMove
 }
 
 func (list *MoveList) String() string {

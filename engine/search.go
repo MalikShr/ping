@@ -96,7 +96,7 @@ func (search *Search) Quiescence(alpha int, beta int, pos *BoardStruct) int {
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
 
-		PickNextMove(moveNum, &list)
+		list.PickNextMove(moveNum)
 
 		if !pos.DoMove(list.Moves[moveNum]) {
 			continue
@@ -153,6 +153,10 @@ func (search *Search) AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct
 	kingBB := pos.Pieces[AllPieces[pos.SideToMove][King]]
 	inCheck := SqAttacked(kingBB.Msb(), pos, pos.SideToMove^1)
 
+	if inCheck {
+		depth++
+	}
+
 	var list MoveList
 	GenerateAllMoves(pos, &list, true)
 
@@ -164,7 +168,7 @@ func (search *Search) AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct
 
 	if pvMove != NoMove {
 		for moveNum := 0; moveNum < list.Count; moveNum++ {
-			if list.Moves[moveNum].Equals(pvMove) {
+			if list.Moves[moveNum].Equal(pvMove) {
 				list.Moves[moveNum].AddScore(MvvLvaOffset + PVMoveScore)
 				break
 			}
@@ -173,7 +177,7 @@ func (search *Search) AlphaBeta(alpha int, beta int, depth int, pos *BoardStruct
 	}
 
 	for moveNum := 0; moveNum < list.Count; moveNum++ {
-		PickNextMove(moveNum, &list)
+		list.PickNextMove(moveNum)
 
 		if !pos.DoMove(list.Moves[moveNum]) {
 			continue
@@ -280,23 +284,6 @@ func (search *Search) checkUp() {
 	if search.Timeset && time.Now().UnixMilli() > int64(search.Stoptime) {
 		search.Stopped = true
 	}
-}
-
-func PickNextMove(moveNum int, list *MoveList) {
-	var tempMove Move
-	bestScore := uint16(0)
-	bestNum := moveNum
-
-	for i := moveNum; i < list.Count; i++ {
-		if list.Moves[i].Score() > bestScore {
-			bestScore = list.Moves[i].Score()
-			bestNum = i
-		}
-	}
-
-	tempMove = list.Moves[moveNum]
-	list.Moves[moveNum] = list.Moves[bestNum]
-	list.Moves[bestNum] = tempMove
 }
 
 func isRepetition(pos *BoardStruct) bool {

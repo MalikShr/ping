@@ -45,8 +45,7 @@ const (
 
 	FENStart = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 
-	maxGameMoves     = 2048
-	maxPositionMoves = 256
+	maxGameMoves = 2048
 )
 
 type BoardStruct struct {
@@ -321,7 +320,7 @@ func (pos *BoardStruct) MoveExists(move Move) bool {
 			continue
 		}
 		pos.UndoMove()
-		if list.Moves[moveNum].Equals(move) {
+		if list.Moves[moveNum].Equal(move) {
 			return true
 		}
 	}
